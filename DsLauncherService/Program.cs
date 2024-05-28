@@ -3,7 +3,7 @@ using DsLauncherService.Extensions;
 using DsLauncherService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using DsIdentity.ApiClient;
+using DsCore.ApiClient;
 using System.Reflection;
 
 namespace DsLauncherService
@@ -16,7 +16,7 @@ namespace DsLauncherService
             .UseContentRoot(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!)
             .ConfigureServices((ctx, services) =>
             {
-                ctx.Configuration.AddDsIdentity(services);
+                ctx.Configuration.AddDsCore(services);
                 services.AddSingleton<ServerProvider>();
                 services.AddSingleton<CommandDispatcher>();
                 services.AddHostedService<CommandService>();

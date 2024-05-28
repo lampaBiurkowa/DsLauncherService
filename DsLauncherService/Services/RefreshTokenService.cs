@@ -1,16 +1,16 @@
-using DsIdentity.ApiClient;
+using DsCore.ApiClient;
 using DsLauncherService.Models;
 using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
 
 namespace DsLauncherService.Services;
 
-internal class RefreshTokenService(DsIdentityClientFactory clientFactory) : BackgroundService
+internal class RefreshTokenService(DsCoreClientFactory clientFactory) : BackgroundService
 {
     private Credentials? credentials;
     private readonly TimeSpan refreshInterval = TimeSpan.FromMinutes(3);
     private readonly Stopwatch refreshStopwatch = new();
-    private readonly DsIdentityClientFactory clientFactory = clientFactory;
+    private readonly DsCoreClientFactory clientFactory = clientFactory;
 
     public void SetCredentials(Credentials credentials)
     {
