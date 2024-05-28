@@ -1,40 +1,39 @@
 ﻿using DsLauncherService.Handlers;
 using DsLauncherService.Extensions;
 
-namespace DsLauncherService.Communication
+namespace DsLauncherService.Communication;
+
+internal class CommandDispatcher
 {
-    internal class CommandDispatcher
+    private readonly Dictionary<string, ICommandHandler> commandHandlers = new();
+
+    public CommandDispatcher() { }
+
+    public CommandDispatcher(IEnumerable<ICommandHandler> commandHandlers)
     {
-        private readonly Dictionary<string, ICommandHandler> _commandHandlers = new();
-
-        public CommandDispatcher() { }
-
-        public CommandDispatcher(IEnumerable<ICommandHandler> commandHandlers)
+        foreach (var commandHandler in commandHandlers)
         {
-            foreach (var commandHandler in commandHandlers)
-            {
-                AddCommandHandler(commandHandler);
-            }
+            AddCommandHandler(commandHandler);
         }
+    }
 
-        public void AddCommandHandler(ICommandHandler commandHandler)
+    public void AddCommandHandler(ICommandHandler commandHandler)
+    {
+        if (commandHandler.GetType().TryGetCustomAttribute<CommandAttribute>(out var commandAttribute))
         {
-            if (commandHandler.GetType().TryGetCustomAttribute<CommandAttribute>(out var commandAttribute))
-            {
-                _commandHandlers.Add(commandAttribute.CommandName, commandHandler);
-            }
+            commandHandlers.Add(commandAttribute.CommandName, commandHandler);
         }
+    }
 
-        public async Task HandleCommand(Command command, CancellationToken cancellationToken)
+    public async Task HandleCommand(Command command, CancellationToken cancellationToken)
+    {
+        try
         {
-            try
-            {
-                await _commandHandlers[command.Name].Handle(command.Args, cancellationToken);
-            }
-            catch (KeyNotFoundException)
-            {
-                Console.WriteLine($"Could not find a handler for the {command.Name} command");
-            }
+            await commandHandlers[command.Name].Handle(command.Args, cancellationToken);
+        }
+        catch (KeyNotFoundException)
+        {
+            Console.WriteLine($"Could not find a handler for the {command.Name} command");
         }
     }
 }

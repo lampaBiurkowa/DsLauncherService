@@ -5,32 +5,32 @@ namespace DsLauncherService.Communication
 {
     internal class ServerProvider : IDisposable
     {
-        private readonly WatsonWsServer _serverInstance;
+        private readonly WatsonWsServer serverInstance;
 
         public ServerProvider(IConfiguration configuration)
         {
-            _serverInstance = new WatsonWsServer(port: configuration.GetValue<int>("port"));
+            serverInstance = new WatsonWsServer(port: configuration.GetValue<int>("port"));
         }
 
         public WatsonWsServer GetRunningServerInstance()
         {
-            if (!_serverInstance.IsListening)
+            if (!serverInstance.IsListening)
             {
-                _serverInstance.Start();
+                serverInstance.Start();
             }
 
-            return _serverInstance;
+            return serverInstance;
         }
 
         public void Dispose()
         {
-            foreach (var client in _serverInstance.ListClients())
+            foreach (var client in serverInstance.ListClients())
             {
-                _serverInstance.DisconnectClient(client.Guid);
+                serverInstance.DisconnectClient(client.Guid);
             }
 
-            _serverInstance.Stop();
-            _serverInstance.Dispose();
+            serverInstance.Stop();
+            serverInstance.Dispose();
         }
     }
 }

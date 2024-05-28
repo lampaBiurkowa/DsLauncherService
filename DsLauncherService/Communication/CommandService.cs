@@ -5,16 +5,16 @@ namespace DsLauncherService.Communication
 {
     internal class CommandService : BackgroundService
     {
-        private readonly CommandDispatcher _dispatcher;
-        private readonly Queue<Command> _commandQueue = new();
+        private readonly CommandDispatcher dispatcher;
+        private readonly Queue<Command> commandQueue = new();
 
         public CommandService(ServerProvider server, CommandDispatcher dispatcher)
         {
-            _dispatcher = dispatcher;
+            this.dispatcher = dispatcher;
 
             server.GetRunningServerInstance().MessageReceived += (s, e) =>
             {
-                _commandQueue.Enqueue(Command.Parse(Encoding.UTF8.GetString(e.Data)));
+                commandQueue.Enqueue(Command.Parse(Encoding.UTF8.GetString(e.Data)));
             };
         }
 
@@ -22,9 +22,9 @@ namespace DsLauncherService.Communication
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                while (_commandQueue.TryDequeue(out var command))
+                while (commandQueue.TryDequeue(out var command))
                 {
-                    await _dispatcher.HandleCommand(command, stoppingToken);
+                    await dispatcher.HandleCommand(command, stoppingToken);
                 }
 
                 await Task.Delay(100, stoppingToken);

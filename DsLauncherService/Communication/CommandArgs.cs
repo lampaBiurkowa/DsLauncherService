@@ -6,7 +6,7 @@ namespace DsLauncherService.Communication
 {
     internal class CommandArgs
     {
-        private readonly Dictionary<string, string> _args = new();
+        private readonly Dictionary<string, string> args = new();
 
         public void Add<T>(string key, T value) where T : IParsable<T>
         {
@@ -15,7 +15,7 @@ namespace DsLauncherService.Communication
                 .Replace("\r", "");
             valueStr ??= "";
 
-            _args[key] = valueStr;
+            args[key] = valueStr;
         }
 
         public void Add<T>(string key, IEnumerable<T> values) where T : IParsable<T>
@@ -31,13 +31,13 @@ namespace DsLauncherService.Communication
 
         public T Get<T>(string key) where T : IParsable<T>
         {
-            return T.Parse(_args[key], CultureInfo.InvariantCulture);
+            return T.Parse(args[key], CultureInfo.InvariantCulture);
         }
 
         public bool TryGet<T>(string key, [MaybeNullWhen(false)]out T value) where T : IParsable<T>
         {
             value = default;
-            return _args.TryGetValue(key, out var str) && 
+            return args.TryGetValue(key, out var str) && 
                 T.TryParse(str, CultureInfo.InvariantCulture, out value); 
         }
 
@@ -53,7 +53,7 @@ namespace DsLauncherService.Communication
 
         public override string ToString()
         {
-            return string.Join('\n', _args.Select(pair =>
+            return string.Join('\n', args.Select(pair =>
             {
                 return $"{pair.Key}: {pair.Value}";
             }));

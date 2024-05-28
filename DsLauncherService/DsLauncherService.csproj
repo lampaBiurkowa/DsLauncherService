@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="DsIdentity.ApiClient" Version="1.0.6" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="WatsonWebsocket" Version="4.1.2" />
   </ItemGroup>
