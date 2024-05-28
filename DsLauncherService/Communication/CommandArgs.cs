@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
 
 namespace DsLauncherService.Communication
@@ -31,6 +32,13 @@ namespace DsLauncherService.Communication
         public T Get<T>(string key) where T : IParsable<T>
         {
             return T.Parse(_args[key], CultureInfo.InvariantCulture);
+        }
+
+        public bool TryGet<T>(string key, [MaybeNullWhen(false)]out T value) where T : IParsable<T>
+        {
+            value = default;
+            return _args.TryGetValue(key, out var str) && 
+                T.TryParse(str, CultureInfo.InvariantCulture, out value); 
         }
 
         public IEnumerable<T> EnumerateArray<T>(string arrayName) where T : IParsable<T>

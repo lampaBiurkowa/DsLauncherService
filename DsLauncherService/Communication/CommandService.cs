@@ -27,7 +27,7 @@ namespace DsLauncherService.Communication
                     await _dispatcher.HandleCommand(command, stoppingToken);
                 }
 
-                await Task.Delay(100);
+                await Task.Delay(100, stoppingToken);
             }
         }
     }

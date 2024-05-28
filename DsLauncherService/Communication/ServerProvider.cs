@@ -12,7 +12,7 @@ namespace DsLauncherService.Communication
             _serverInstance = new WatsonWsServer(port: configuration.GetValue<int>("port"));
         }
 
-        public WatsonWsServer GetRunningServerInstance(CancellationToken cancellationToken = default)
+        public WatsonWsServer GetRunningServerInstance()
         {
             if (!_serverInstance.IsListening)
             {
