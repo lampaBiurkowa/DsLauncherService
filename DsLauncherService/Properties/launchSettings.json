@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DsLauncherService": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 25219"
+    }
+  }
+}
