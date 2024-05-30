@@ -1,5 +1,5 @@
-﻿using DsLauncherService.Handlers;
-using DsLauncherService.Extensions;
+﻿using DsLauncherService.Extensions;
+using DsLauncherService.Handlers;
 
 namespace DsLauncherService.Communication;
 
@@ -25,15 +25,8 @@ internal class CommandDispatcher
         }
     }
 
-    public async Task HandleCommand(Command command, CancellationToken cancellationToken)
+    public async Task<Command> HandleCommand(Command command, CancellationToken cancellationToken)
     {
-        try
-        {
-            await commandHandlers[command.Name].Handle(command.Args, cancellationToken);
-        }
-        catch (KeyNotFoundException)
-        {
-            Console.WriteLine($"Could not find a handler for the {command.Name} command");
-        }
+        return await commandHandlers[command.Name].Handle(command.Args, cancellationToken);
     }
 }

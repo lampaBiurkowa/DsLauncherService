@@ -1,4 +1,4 @@
-﻿namespace DsLauncherService.Communication
+﻿namespace DsLauncherService.Handlers
 {
     [AttributeUsage(AttributeTargets.Class)]
     sealed class CommandAttribute : Attribute

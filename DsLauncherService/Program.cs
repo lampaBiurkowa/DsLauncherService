@@ -19,7 +19,7 @@ namespace DsLauncherService
                 ctx.Configuration.AddDsCore(services);
                 services.AddSingleton<ServerProvider>();
                 services.AddSingleton<CommandDispatcher>();
-                services.AddHostedService<CommandService>();
+                services.AddHostedSingleton<CommandService>();
                 services.AddHostedSingleton<RefreshTokenService>();
                 services.InstallCommandHandlers();
             }).RunConsoleAsync();

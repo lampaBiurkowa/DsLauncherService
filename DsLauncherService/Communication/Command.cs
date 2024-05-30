@@ -3,41 +3,21 @@
     internal class Command
     {
         public string Name { get; }
-        public CommandArgs Args { get; }
+        public CommandHead Head { get; init; }
+        public CommandArgs Args { get; init; }
 
         public Command(string name)
         {
             Name = name;
+            Head = new CommandHead();
             Args = new CommandArgs();
         }
 
-        public static Command Parse(string value)
+        public static readonly Command Empty = new Command(string.Empty);
+
+        public override string ToString()
         {
-            using var reader = new StringReader(value);
-
-            string? commandName = reader.ReadLine();
-            if (string.IsNullOrEmpty(commandName))
-            {
-                throw new FormatException("Invalid command name.");
-            }
-
-            var command = new Command(commandName);
-
-            string? line;
-            while ((line = reader.ReadLine()) is not null)
-            {
-                if (line.Length == 0) break;
-
-                int colonIndex = line.IndexOf(':');
-                if (colonIndex == -1) break;
-
-                string argName = line[..colonIndex];
-                string argValue = line[(colonIndex + 1)..];
-
-                command.Args.Add(argName, argValue);
-            }
-
-            return command;
+            return $"[Command]: Name({Name})\n[Head]:\n{Head}\n[Args]:\n{Args}";
         }
     }
 }
