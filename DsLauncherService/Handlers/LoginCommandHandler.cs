@@ -1,32 +1,28 @@
-﻿using DsLauncherService.Communication;
+﻿using DsCore.ApiClient;
+using DsLauncherService.Communication;
 using DsLauncherService.Services;
 
 namespace DsLauncherService.Handlers;
 
 [Command("login")]
-internal class LoginCommandHandler(RefreshTokenService refreshTokenService) : ICommandHandler
-{
-    readonly RefreshTokenService refreshTokenService = refreshTokenService;
-    
-    public Task<Command> Handle(CommandArgs args, CancellationToken cancellationToken)
+internal class LoginCommandHandler(DsCoreClientFactory clientFactory, CacheService cache) : ICommandHandler
+{    
+    public async Task<Command> Handle(CommandArgs args, CancellationToken ct)
     {
-        var token = args.Get<string>("token");
         var userGuid = args.Get<Guid>("userId");
-        refreshTokenService.SetCredentials(new()
-        {
-            UserGuid = userGuid,
-            PasswordHash = args.Get<string>("passwordBase64"),
-            Token = token
-        });
+        var passwordBase64 = args.Get<string>("passwordBase64");
+        var token = await clientFactory.CreateClient(string.Empty).Auth_LoginAsync(userGuid, passwordBase64, ct);
 
-        return Task.FromResult(new Command("credentials")
+        cache.SetToken(token);
+
+        return new Command("credentials")
         {
             Args =
             {
                 { "token", token },
                 { "userGuid", userGuid }
             }
-        });
+        };
     }
 }
 

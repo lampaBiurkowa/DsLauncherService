@@ -20,7 +20,8 @@ namespace DsLauncherService
                 services.AddSingleton<ServerProvider>();
                 services.AddSingleton<CommandDispatcher>();
                 services.AddHostedSingleton<CommandService>();
-                services.AddHostedSingleton<RefreshTokenService>();
+                services.AddSingleton<CacheService>();
+                services.AddMemoryCache();
                 services.InstallCommandHandlers();
             }).RunConsoleAsync();
         }
