@@ -8,7 +8,7 @@ internal class CommandService : BackgroundService
 {
     private readonly ServerProvider server;
     private readonly CommandDispatcher dispatcher;
-    private readonly HashSet<CommandExecutionMetadata> commands = [];
+    private readonly HashSet<CommandExecutionMetadata> commands;
 
     private readonly object _lock = new();
 
@@ -16,6 +16,8 @@ internal class CommandService : BackgroundService
     {
         this.server = server;
         this.dispatcher = dispatcher;
+
+        commands = new HashSet<CommandExecutionMetadata>(new CommandExecutionMetadataEqualityComparer());
 
         server.GetRunningServerInstance().MessageReceived += (s, e) =>
         {
@@ -26,6 +28,7 @@ internal class CommandService : BackgroundService
 
             lock (_lock)
             {
+                commands.Remove(execMetadata);
                 commands.Add(execMetadata);
             }
         };
