@@ -1,40 +1,39 @@
-﻿namespace DsLauncherService.Communication
+﻿namespace DsLauncherService.Communication;
+
+internal class CommandHead : CommandArgs
 {
-    internal class CommandHead : CommandArgs
+    private const string WorkerIntervalKey = "workerinterval";
+    private const string WorkerRepetitionsKey = "workerrepetitions";
+
+    public CommandHead() { }
+
+    public CommandHead(CommandArgs commandArgs)
+        : base(commandArgs)
+    { }
+
+    public int WorkerInterval
     {
-        private const string WorkerIntervalKey = "workerinterval";
-        private const string WorkerRepetitionsKey = "workerrepetitions";
-
-        public CommandHead() { }
-
-        public CommandHead(CommandArgs commandArgs)
-            : base(commandArgs)
-        { }
-
-        public int WorkerInterval
+        get
         {
-            get
+            if (TryGet(WorkerIntervalKey, out int workerInterval))
             {
-                if (TryGet(WorkerIntervalKey, out int workerInterval))
-                {
-                    return workerInterval;
-                }
-
-                return 1000;
+                return workerInterval;
             }
+
+            return 1000;
         }
+    }
 
-        public int WorkerRepetitions
+    public int WorkerRepetitions
+    {
+        get
         {
-            get
+            if (TryGet(WorkerRepetitionsKey, out int workerRepetitions))
             {
-                if (TryGet(WorkerRepetitionsKey, out int workerRepetitions))
-                {
-                    return workerRepetitions;
-                }
-
-                return 1;
+                return workerRepetitions;
             }
+
+            return 1;
         }
     }
 }

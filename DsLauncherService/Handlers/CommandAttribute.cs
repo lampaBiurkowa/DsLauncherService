@@ -1,13 +1,7 @@
-﻿namespace DsLauncherService.Handlers
-{
-    [AttributeUsage(AttributeTargets.Class)]
-    sealed class CommandAttribute : Attribute
-    {
-        public string CommandName { get; }
+﻿namespace DsLauncherService.Handlers;
 
-        public CommandAttribute(string commandName)
-        {
-            CommandName = commandName;
-        }
-    }
+[AttributeUsage(AttributeTargets.Class)]
+sealed class CommandAttribute(string commandName) : Attribute
+{
+    public string CommandName => commandName;
 }

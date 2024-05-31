@@ -2,83 +2,80 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace DsLauncherService.Communication
+namespace DsLauncherService.Communication;
+
+internal class CommandService : BackgroundService
 {
-    internal class CommandService : BackgroundService
+    private readonly ServerProvider server;
+    private readonly CommandDispatcher dispatcher;
+    private readonly HashSet<CommandExecutionMetadata> commands = [];
+
+    private readonly object _lock = new();
+
+    public CommandService(ServerProvider server, CommandDispatcher dispatcher)
     {
-        private readonly ServerProvider server;
-        private readonly CommandDispatcher dispatcher;
-        private readonly HashSet<CommandExecutionMetadata> commands;
+        this.server = server;
+        this.dispatcher = dispatcher;
 
-        private object _lock = new object();
-
-        public CommandService(ServerProvider server, CommandDispatcher dispatcher)
+        server.GetRunningServerInstance().MessageReceived += (s, e) =>
         {
-            this.server = server;
-            this.dispatcher = dispatcher;
+            var commandStr = Encoding.UTF8.GetString(e.Data);
+            var command = CommandParser.Deserialize(commandStr);
 
-            commands = new HashSet<CommandExecutionMetadata>();
+            var execMetadata = new CommandExecutionMetadata(command);
 
-            server.GetRunningServerInstance().MessageReceived += (s, e) =>
+            lock (_lock)
             {
-                var commandStr = Encoding.UTF8.GetString(e.Data);
-                var command = CommandParser.Deserialize(commandStr);
-
-                var execMetadata = new CommandExecutionMetadata(command);
-
-                lock (_lock)
-                {
-                    commands.Add(execMetadata);
-                }
-            };
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            var stopwatch = Stopwatch.StartNew();
-
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                lock (_lock)
-                {
-                    commands.RemoveWhere(execMetadata => execMetadata.ExecutionsRemaining == 0);
-                }
-
-                int elapsedTime = (int)stopwatch.ElapsedMilliseconds;
-
-                var tasks = commands.ToArray().Select(execMetadata => Task.Run(async () =>
-                {
-                    execMetadata.TimeUntilExecution -= elapsedTime;
-
-                    if (execMetadata.ShouldExecute)
-                    {
-                        try
-                        {
-                            var response = await dispatcher.HandleCommand(execMetadata.Command, stoppingToken);
-
-                            if (!string.IsNullOrWhiteSpace(response.Name))
-                            {
-                                await server.SendAsync(CommandParser.Serialize(response));
-                            }
-
-                            execMetadata.ExecutionsRemaining--;
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine(e.StackTrace);
-                        }
-                        finally
-                        {
-                            execMetadata.TimeUntilExecution = execMetadata.Command.Head.WorkerInterval;
-                        }
-                    }
-                }));
-
-                await Task.WhenAll(tasks);
-
-                stopwatch.Restart();
-                await Task.Delay(1);
+                commands.Add(execMetadata);
             }
+        };
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            lock (_lock)
+            {
+                commands.RemoveWhere(execMetadata => execMetadata.ExecutionsRemaining == 0);
+            }
+
+            int elapsedTime = (int)stopwatch.ElapsedMilliseconds;
+
+            var tasks = commands.ToArray().Select(execMetadata => Task.Run(async () =>
+            {
+                execMetadata.TimeUntilExecution -= elapsedTime;
+
+                if (execMetadata.ShouldExecute)
+                {
+                    try
+                    {
+                        var response = await dispatcher.HandleCommand(execMetadata.Command, stoppingToken);
+
+                        if (!string.IsNullOrWhiteSpace(response.Name))
+                        {
+                            await server.SendAsync(CommandParser.Serialize(response));
+                        }
+
+                        execMetadata.ExecutionsRemaining--;
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.StackTrace);
+                    }
+                    finally
+                    {
+                        execMetadata.TimeUntilExecution = execMetadata.Command.Head.WorkerInterval;
+                    }
+                }
+            }));
+
+            await Task.WhenAll(tasks);
+
+            stopwatch.Restart();
+            await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
         }
     }
 }
