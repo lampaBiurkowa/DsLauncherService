@@ -26,6 +26,7 @@ namespace DsLauncherService
                 services.AddSingleton<CommandDispatcher>();
                 services.AddDbContext<DbContext, DsLauncherServiceContext>();
                 services.AddHostedSingleton<CommandService>();
+                services.AddSingleton<InstallationService>();
                 services.AddSingleton<CacheService>();
                 services.AddMemoryCache();
                 services.InstallCommandHandlers();
