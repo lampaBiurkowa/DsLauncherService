@@ -14,6 +14,7 @@ internal class LoginCommandHandler(DsCoreClientFactory clientFactory, CacheServi
         var token = await clientFactory.CreateClient(string.Empty).Auth_LoginAsync(userGuid, passwordBase64, ct);
 
         cache.SetToken(token);
+        cache.SetUser(userGuid);
 
         return new Command("credentials")
         {
