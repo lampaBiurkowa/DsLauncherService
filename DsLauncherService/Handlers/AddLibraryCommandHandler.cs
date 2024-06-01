@@ -5,7 +5,7 @@ using DsLauncherService.Storage;
 namespace DsLauncherService.Handlers;
 
 [Command("add-library")]
-internal class AddLibraryCommandHandler(Repository<Library> libraryRepo, Repository<Installed> installedRepo) : ICommandHandler
+internal class AddLibraryCommandHandler(Repository<Library> libraryRepo) : ICommandHandler
 {    
     public async Task<Command> Handle(CommandArgs args, CancellationToken ct)
     {
