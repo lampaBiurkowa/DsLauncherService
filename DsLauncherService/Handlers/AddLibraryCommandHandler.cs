@@ -16,7 +16,13 @@ internal class AddLibraryCommandHandler(Repository<Library> libraryRepo) : IComm
         await libraryRepo.InsertAsync(new() { Path = libraryPath }, ct);
         await libraryRepo.CommitAsync(ct);
 
-        return Command.Empty;
+        return new Command("get-libraries")
+        {
+            Args =
+            {
+                {"libraries", (await libraryRepo.GetAll(ct: ct)).Select(x => x.Path) }
+            }
+        };
     }
 
     static bool IsDirectoryEmpty(string path) => !Directory.EnumerateFileSystemEntries(path).Any();

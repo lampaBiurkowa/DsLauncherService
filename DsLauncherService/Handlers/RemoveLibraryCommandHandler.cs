@@ -19,6 +19,12 @@ internal class RemoveLibraryCommandHandler(Repository<Library> libraryRepo, Repo
         await libraryRepo.DeleteAsync(library.Id, ct);
         await libraryRepo.CommitAsync(ct);
 
-        return Command.Empty;
+        return new Command("get-libraries")
+        {
+            Args =
+            {
+                {"libraries", (await libraryRepo.GetAll(ct: ct)).Select(x => x.Path) }
+            }
+        };
     }
 }
