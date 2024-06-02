@@ -12,7 +12,7 @@ namespace DsLauncherService.Communication
 
         public CommandArgs(CommandArgs commandArgs)
         {
-            args = commandArgs.args;
+            args = new(commandArgs.args);
         }
 
         public int Count
