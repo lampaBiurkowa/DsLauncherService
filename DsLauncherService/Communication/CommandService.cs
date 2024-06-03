@@ -60,9 +60,12 @@ internal class CommandService : BackgroundService
                         if (!string.IsNullOrWhiteSpace(response.Name))
                         {
                             await server.SendAsync(CommandParser.Serialize(response));
+                            execMetadata.ExecutionsRemaining--;
                         }
-
-                        execMetadata.ExecutionsRemaining--;
+                        else
+                        {
+                            execMetadata.ExecutionsRemaining = 0;
+                        }
                     }
                     catch (Exception e)
                     {
