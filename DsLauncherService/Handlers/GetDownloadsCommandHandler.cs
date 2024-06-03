@@ -9,10 +9,9 @@ internal class GetDownloadsCommandHandler(InstallationService installationServic
     public Task<Command> Handle(CommandArgs args, CancellationToken ct)
     {
         var cmd = new Command("get-downloads");
-
         foreach (var status in installationService.GetCurrentlyBeingInstalled())
-            cmd.Args.Add(status.ProductGuid.ToString(), $"{status.Percentage},{status.Step}");
+            cmd.Args.Add(status.Key.ToString(), $"{status.Value.Percentage},{status.Value.Step}");
         
-        return Task.FromResult(cmd);
+        return cmd.Args.Count > 0 ? Task.FromResult(cmd) : Task.FromResult(Command.Empty);
     }
 }
