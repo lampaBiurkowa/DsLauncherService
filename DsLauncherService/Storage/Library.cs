@@ -7,6 +7,7 @@ namespace DsLauncherService.Storage;
 public class Library : Entity
 {
     public required string Path { get; set; }
+    public required string Name { get; set; }
 }
 
 public class LibraryConfiguration : IEntityTypeConfiguration<Library>

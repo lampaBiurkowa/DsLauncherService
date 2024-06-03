@@ -13,7 +13,7 @@ internal class GetLibrariesCommandHandler(Repository<Library> repo) : ICommandHa
         {
             Args = 
             {
-                { "libraries", (await repo.GetAll(ct: ct)).Select(x => x.Path) }
+                { "libraries", (await repo.GetAll(ct: ct)).Select(x => $"{x.Path},{x.Name}") }
             }
         };
     }

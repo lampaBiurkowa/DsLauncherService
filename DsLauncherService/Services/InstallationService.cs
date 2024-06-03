@@ -65,6 +65,18 @@ class InstallationService(
             return await VerifyInstallation(productPath, latestPackageGuid, ct);
         }, ct);
     }
+    
+    async Task<bool> ExecuteInstallTask(Func<DsLauncherNdibApiClient, Repository<Installed>, MemoryStream, Task<bool>> task, CancellationToken ct)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var repo = scope.ServiceProvider.GetRequiredService<Repository<Installed>>();
+        using var stream = new MemoryStream();
+        var client = new DsLauncherNdibApiClient(launcherOptions);
+
+        var verified = await task(client, repo, stream);
+        await repo.CommitAsync(ct);
+        return verified;
+    }
 
     async Task<bool> DoUpdateToVersion(Installed installed, Guid dstPackageGuid, CancellationToken ct)
     {
@@ -105,18 +117,6 @@ class InstallationService(
             
             return verified;
         }, ct);
-    }
-    
-    async Task<bool> ExecuteInstallTask(Func<DsLauncherNdibApiClient, Repository<Installed>, MemoryStream, Task<bool>> task, CancellationToken ct)
-    {
-        using var scope = serviceProvider.CreateScope();
-        var repo = scope.ServiceProvider.GetRequiredService<Repository<Installed>>();
-        using var stream = new MemoryStream();
-        var client = new DsLauncherNdibApiClient(launcherOptions);
-
-        var verified = await task(client, repo, stream);
-        await repo.CommitAsync(ct);
-        return verified;
     }
 
     static string GetProductPath(Guid productGuid, string library) => Path.Combine(library, productGuid.ToString());

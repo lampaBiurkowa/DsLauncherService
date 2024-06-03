@@ -23,7 +23,7 @@ internal class RemoveLibraryCommandHandler(Repository<Library> libraryRepo, Repo
         {
             Args =
             {
-                {"libraries", (await libraryRepo.GetAll(ct: ct)).Select(x => x.Path) }
+                {"libraries", (await libraryRepo.GetAll(ct: ct)).Select(x => $"{x.Path},{x.Name}") }
             }
         };
     }
