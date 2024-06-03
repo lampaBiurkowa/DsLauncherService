@@ -9,7 +9,7 @@ namespace DsLauncherService.Handlers
         {
             if (args.TryGet<int>("testnum", out var testArg))
             {
-                await Task.Delay(10);
+                await Task.Delay(10, cancellationToken);
 
                 var response = new Command("testresponse");
                 response.Args.Add("testnumresponse", testArg + 1);
