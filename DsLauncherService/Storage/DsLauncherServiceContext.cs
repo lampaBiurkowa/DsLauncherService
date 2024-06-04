@@ -7,7 +7,7 @@ namespace DsLauncherService.Storage;
 public class DsLauncherServiceContext : DibContext
 {
     public DbSet<Library> Library { get; set; }
-    public DbSet<GameActivity> GameActivity { get; set; }
+    public DbSet<Activity> Activity { get; set; }
     public DbSet<Settings> Settings { get; set; }
     public DbSet<Theme> Theme { get; set; }
     public DbSet<Installed> Installed { get; set; }
