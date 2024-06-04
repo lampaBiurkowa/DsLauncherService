@@ -34,6 +34,12 @@ internal class InstallCommandHandler(
         else
             installationService.RegisterUpdateToLatest(currentInstallation, ct);
 
-        return Command.Empty;
+        return new Command("get-installed")
+        {
+            Args = 
+            {
+                { "get-installed", (await installedRepo.GetAll(ct: ct)).Select(x => $"{x.ProductGuid},{x.PackageGuid}") }
+            }
+        };
     }
 }
