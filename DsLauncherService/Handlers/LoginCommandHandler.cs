@@ -5,7 +5,10 @@ using DsLauncherService.Services;
 namespace DsLauncherService.Handlers;
 
 [Command("login")]
-internal class LoginCommandHandler(DsCoreClientFactory clientFactory, CacheService cache) : ICommandHandler
+internal class LoginCommandHandler(
+    DsCoreClientFactory clientFactory,
+    CacheService cache,
+    GameActivityService gameActivityService) : ICommandHandler
 {    
     public async Task<Command> Handle(CommandArgs args, CancellationToken ct)
     {
@@ -16,6 +19,7 @@ internal class LoginCommandHandler(DsCoreClientFactory clientFactory, CacheServi
         cache.SetToken(token);
         cache.SetUser(userGuid);
 
+        _ = gameActivityService.SendLocalActivities(userGuid, ct);
         return new Command("credentials")
         {
             Args =

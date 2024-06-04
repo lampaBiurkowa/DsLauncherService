@@ -42,41 +42,57 @@ public class GameActivityService(
         return true;
     }
 
+    public async Task SendLocalActivities(Guid userGuid, CancellationToken ct)
+    {
+        var activities = await repo.GetAll(restrict: x => x.UserGuid == userGuid, ct: ct);
+        foreach (var activity in activities)
+        {
+            await SendActivity(activity, ct);
+            await repo.DeleteAsync(activity.Id, ct);
+        }
+        await repo.CommitAsync(ct);
+    }
+
+    async Task SendActivity(Storage.Activity activity, CancellationToken ct)
+    {
+        await GetClient().Activity_ReportActivityAsync(new()
+        {
+            StartDate = activity.StarDate,
+            EndDate = activity.EndDate,
+            ProductGuid = activity.ProductGuid,
+            UserGuid = activity.UserGuid,
+        }, ct);
+    }
+
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
         while (!ct.IsCancellationRequested)
         {
-            var currentActivity = Interlocked.CompareExchange(ref runningGame, null, null);
-
-            if (currentActivity != null)
-            {
-                await dbLock.WaitAsync(ct);
-                try
-                {
-                    var activity = await repo.GetById(currentActivity.LocalDataId, ct: ct);
-                    if (activity != null)
-                    {
-                        activity.EndDate = DateTime.UtcNow;
-                        await repo.UpdateAsync(activity, ct);
-
-                        await GetClient().Activity_ReportActivityAsync(new()
-                        {
-                            StartDate = activity.StarDate,
-                            EndDate = activity.EndDate,
-                            ProductGuid = activity.ProductGuid,
-                            UserGuid = activity.UserGuid,
-                        }, ct);
-
-                        await repo.CommitAsync(ct);
-                    }
-                }
-                finally
-                {
-                    dbLock.Release();
-                }
-            }
-
+            await MonitorActivity(ct);
             await Task.Delay(checkInterval, ct);
+        }
+    }
+
+    async Task MonitorActivity(CancellationToken ct)
+    {
+        var currentActivity = Interlocked.CompareExchange(ref runningGame, null, null);
+        if (currentActivity == null) return;
+        
+        await dbLock.WaitAsync(ct);
+        try
+        {
+            var activity = await repo.GetById(currentActivity.LocalDataId, ct: ct);
+            if (activity != null)
+            {
+                activity.EndDate = DateTime.UtcNow;
+                await repo.UpdateAsync(activity, ct);
+                await SendActivity(activity, ct);
+                await repo.CommitAsync(ct);
+            }
+        }
+        finally
+        {
+            dbLock.Release();
         }
     }
 
