@@ -2,10 +2,10 @@ using System.Diagnostics;
 
 namespace DsLauncherService.Models;
 
-class CurrentActivity
+class CurrentActivity(Guid productGuid, Process process, DateTime startDate, long localDataId)
 {
-    public DateTime StartDate { get; set; }
-    public Guid ProductGuid { get; set; }
-    public required Process Process { get; set; }
-    public long LocalDataId { get; set; }
+    public Guid ProductGuid { get; } = productGuid;
+    public Process Process { get; } = process;
+    public DateTime StartDate { get; } = startDate;
+    public long LocalDataId { get; } = localDataId;
 }

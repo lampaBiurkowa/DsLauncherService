@@ -3,12 +3,15 @@ using DibBase.Infrastructure;
 using DsLauncher.ApiClient;
 using DsLauncherService.Communication;
 using DsLauncherService.Helpers;
+using DsLauncherService.Services;
 using DsLauncherService.Storage;
 
 namespace DsLauncherService.Handlers;
 
 [Command("execute")]
-internal class ExecuteCommandHandler(Repository<Installed> installedRepo) : ICommandHandler
+internal class ExecuteCommandHandler(
+    Repository<Installed> installedRepo,
+    GameActivityService gameActivityService) : ICommandHandler
 { 
     public async Task<Command> Handle(CommandArgs args, CancellationToken ct)
     {
@@ -33,7 +36,7 @@ internal class ExecuteCommandHandler(Repository<Installed> installedRepo) : ICom
         }
 
         var executeProcess = CreateProces(exePath, workingDir: Path.GetDirectoryName(exePath));
-        executeProcess.Start();
+        await gameActivityService.StartGame(productGuid, executeProcess, ct);
         return Command.Empty;
     }
 
