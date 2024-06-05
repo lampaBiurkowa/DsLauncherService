@@ -1,18 +1,19 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using DsLauncherService.Args;
+using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
 using System.Text;
 
 namespace DsLauncherService.Communication;
 
-internal class CommandService : BackgroundService
+internal class CommandService<T> : BackgroundService where T : ICommandArgs
 {
     private readonly ServerProvider server;
-    private readonly CommandDispatcher dispatcher;
+    private readonly CommandDispatcher<T> dispatcher;
     private readonly HashSet<CommandExecutionMetadata> commands;
 
     private readonly object _lock = new();
 
-    public CommandService(ServerProvider server, CommandDispatcher dispatcher)
+    public CommandService(ServerProvider server, CommandDispatcher<T> dispatcher)
     {
         this.server = server;
         this.dispatcher = dispatcher;

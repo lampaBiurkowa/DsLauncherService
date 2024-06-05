@@ -1,30 +1,29 @@
 ﻿using DibBase.Infrastructure;
+using DsLauncherService.Args;
+using DsLauncherService.Builders;
 using DsLauncherService.Communication;
 using DsLauncherService.Storage;
 
 namespace DsLauncherService.Handlers;
 
 [Command("remove-library")]
-internal class RemoveLibraryCommandHandler(Repository<Library> libraryRepo, Repository<Installed> installedRepo) : ICommandHandler
+internal class RemoveLibraryCommandHandler(
+    Repository<Library> libraryRepo,
+    Repository<Installed> installedRepo,
+    GetLibrariesCommandBuilder builder) : ICommandHandler<GetLibrariesCommandArgs>
 {    
-    public async Task<Command> Handle(CommandArgs args, CancellationToken ct)
+    public async Task<Response<GetLibrariesCommandArgs>> Handle(CommandArgs args, CancellationToken ct)
     {
         var libraryPath = args.Get<string>("library").Trim();
         var library = (await libraryRepo.GetAll(restrict: x => x.Path == libraryPath, ct: ct)).FirstOrDefault();
-        if (library == null) return Command.Empty;
+        if (library == null) throw new();
 
         var isUsed = (await installedRepo.GetAll(restrict: x => x.LibraryId == library.Id, ct: ct)).Count != 0;
-        if (isUsed) return Command.Empty;
+        if (isUsed) throw new();
 
         await libraryRepo.DeleteAsync(library.Id, ct);
         await libraryRepo.CommitAsync(ct);
 
-        return new Command("get-libraries")
-        {
-            Args =
-            {
-                {"libraries", (await libraryRepo.GetAll(ct: ct)).Select(x => $"{x.Path},{x.Name}") }
-            }
-        };
+        return await builder.Build(ct);
     }
 }
