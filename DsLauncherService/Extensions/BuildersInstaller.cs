@@ -11,6 +11,6 @@ internal static class BuildersInstaller
         assembly ??= Assembly.GetExecutingAssembly();
         var commandBuilders = assembly.GetTypes().Where(type => type.GetInterfaces().Contains(typeof(ICommandBuilder)));
         foreach (var commandBuilder in commandBuilders)
-            services.AddSingleton(typeof(ICommandBuilder), commandBuilder);
+            services.AddSingleton(commandBuilder);
     }
 }
