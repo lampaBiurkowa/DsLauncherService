@@ -7,9 +7,9 @@ using DsLauncherService.Storage;
 namespace DsLauncherService.Handlers;
 
 [Command("add-library")]
-internal class AddLibraryCommandHandler(Repository<Library> libraryRepo, GetLibrariesCommandBuilder builder) : ICommandHandler<GetLibrariesCommandArgs>
+internal class AddLibraryCommandHandler(Repository<Library> libraryRepo, GetLibrariesCommandBuilder builder) : ICommandHandler
 {    
-    public async Task<Response<GetLibrariesCommandArgs>> Handle(CommandArgs args, CancellationToken ct)
+    public async Task<Response> Handle(CommandArgs args, CancellationToken ct)
     {
         var libraryPath = args.Get<string>("library").Trim();
         var libraryName = args.Get<string>("name").Trim();

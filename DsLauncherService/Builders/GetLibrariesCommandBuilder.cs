@@ -5,11 +5,11 @@ using DsLauncherService.Storage;
 
 namespace DsLauncherService.Builders;
 
-class GetLibrariesCommandBuilder(Repository<Library> repo) : ICommandBuilder<GetLibrariesCommandArgs>
+class GetLibrariesCommandBuilder(Repository<Library> repo) : ICommandBuilder
 {
     public string Name => "get-libraries";
 
-    public async Task<Response<GetLibrariesCommandArgs>> Build(CancellationToken ct)
+    public async Task<Response> Build(CancellationToken ct)
     {
         var libraries = (await repo.GetAll(ct: ct)).Select(x => new LibraryEntry()
         {
@@ -17,6 +17,6 @@ class GetLibrariesCommandBuilder(Repository<Library> repo) : ICommandBuilder<Get
             Name = x.Name
         }) ?? [];
 
-        return new Response<GetLibrariesCommandArgs>(Name, new() { Libraries = libraries });
+        return new Response(Name, new GetLibrariesCommandArgs() { Libraries = libraries });
     }
 }

@@ -1,9 +1,8 @@
-﻿using DsLauncherService.Args;
-using DsLauncherService.Communication;
+﻿using DsLauncherService.Communication;
 
 namespace DsLauncherService.Handlers;
 
-internal interface ICommandHandler<T> where T : ICommandArgs
+internal interface ICommandHandler
 {
-    Task<Response<T>> Handle(CommandArgs args, CancellationToken cancellationToken);
+    Task<Response> Handle(CommandArgs args, CancellationToken cancellationToken);
 }

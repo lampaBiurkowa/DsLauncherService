@@ -1,5 +1,4 @@
 ﻿using DibBase.Infrastructure;
-using DsLauncherService.Args;
 using DsLauncherService.Builders;
 using DsLauncherService.Communication;
 using DsLauncherService.Services;
@@ -12,9 +11,9 @@ internal class InstallCommandHandler(
     Repository<Installed> installedRepo,
     Repository<Library> libraryRepo,
     InstallationService installationService,
-    GetInstalledCommandBuilder builder) : ICommandHandler<GetInstalledCommandArgs>
+    GetInstalledCommandBuilder builder) : ICommandHandler
 { 
-    public async Task<Response<GetInstalledCommandArgs>> Handle(CommandArgs args, CancellationToken ct)
+    public async Task<Response> Handle(CommandArgs args, CancellationToken ct)
     {
         var productGuid = args.Get<Guid>("productGuid");
         var exePath = args.Get<string>("exePath");

@@ -1,10 +1,9 @@
-using DsLauncherService.Args;
 using DsLauncherService.Communication;
 
 namespace DsLauncherService.Builders;
 
-interface ICommandBuilder<T> where T : ICommandArgs
+interface ICommandBuilder
 {
     string Name { get; }
-    Task<Response<T>> Build(CancellationToken ct);
+    Task<Response> Build(CancellationToken ct);
 }

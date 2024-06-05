@@ -10,41 +10,40 @@ using DsLauncherService.Storage;
 using DibBase.Infrastructure;
 using DsLauncher.ApiClient;
 
-namespace DsLauncherService
-{
-    internal class Program
-    {
-        static async Task Main(string[] args)
-        {
-            await Host.CreateDefaultBuilder(args)
-            .UseContentRoot(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!)
-            .ConfigureServices((ctx, services) =>
-            {
-                ctx.Configuration.AddDsCore(services);
-                ctx.Configuration.AddDsLauncher(services);
-                services.AddSingleton<ServerProvider>();
-                services.AddSingleton<CommandDispatcher>();
-                services.AddDbContext<DbContext, DsLauncherServiceContext>();
-                services.AddHostedSingleton<CommandService>();
-                services.AddHostedSingleton<GameActivityService>();
-                services.AddSingleton<InstallationService>();
-                services.AddSingleton<CacheService>();
-                services.AddMemoryCache();
-                services.InstallCommandHandlers();
-                services.InstallCommandBuilders();
+namespace DsLauncherService;
 
-                var entityTypes = new List<Type>();
-                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-                foreach (var assembly in assemblies)
+internal class Program
+{
+    static async Task Main(string[] args)
+    {
+        await Host.CreateDefaultBuilder(args)
+        .UseContentRoot(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!)
+        .ConfigureServices((ctx, services) =>
+        {
+            ctx.Configuration.AddDsCore(services);
+            ctx.Configuration.AddDsLauncher(services);
+            services.AddSingleton<ServerProvider>();
+            services.AddSingleton<CommandDispatcher>();
+            services.AddDbContext<DbContext, DsLauncherServiceContext>();
+            services.AddHostedSingleton<CommandService>();
+            services.AddHostedSingleton<GameActivityService>();
+            services.AddSingleton<InstallationService>();
+            services.AddSingleton<CacheService>();
+            services.AddMemoryCache();
+            services.InstallCommandBuilders();
+            services.InstallCommandHandlers();
+
+            var entityTypes = new List<Type>();
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            foreach (var assembly in assemblies)
+            {
+                entityTypes.AddRange(assembly.GetTypes().Where(type => type.IsSubclassOf(typeof(DibBase.ModelBase.Entity))).ToList());
+                foreach (var e in entityTypes)
                 {
-                    entityTypes.AddRange(assembly.GetTypes().Where(type => type.IsSubclassOf(typeof(DibBase.ModelBase.Entity))).ToList());
-                    foreach (var e in entityTypes)
-                    {
-                        var repositoryType = typeof(Repository<>).MakeGenericType(e);
-                        services.AddScoped(repositoryType);
-                    }
+                    var repositoryType = typeof(Repository<>).MakeGenericType(e);
+                    services.AddScoped(repositoryType);
                 }
-            }).RunConsoleAsync();
-        }
+            }
+        }).RunConsoleAsync();
     }
 }

@@ -1,5 +1,4 @@
 ﻿using DsCore.ApiClient;
-using DsLauncherService.Args;
 using DsLauncherService.Builders;
 using DsLauncherService.Communication;
 using DsLauncherService.Services;
@@ -11,9 +10,9 @@ internal class LoginCommandHandler(
     DsCoreClientFactory clientFactory,
     CacheService cache,
     GameActivityService gameActivityService,
-    GetCredentialsCommandBuilder builder) : ICommandHandler<GetCredentialsCommandArgs>
+    GetCredentialsCommandBuilder builder) : ICommandHandler
 {    
-    public async Task<Response<GetCredentialsCommandArgs>> Handle(CommandArgs args, CancellationToken ct)
+    public async Task<Response> Handle(CommandArgs args, CancellationToken ct)
     {
         var userGuid = args.Get<Guid>("userId");
         var passwordBase64 = args.Get<string>("passwordBase64");

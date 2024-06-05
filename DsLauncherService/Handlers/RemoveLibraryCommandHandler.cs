@@ -1,5 +1,4 @@
 ﻿using DibBase.Infrastructure;
-using DsLauncherService.Args;
 using DsLauncherService.Builders;
 using DsLauncherService.Communication;
 using DsLauncherService.Storage;
@@ -10,14 +9,12 @@ namespace DsLauncherService.Handlers;
 internal class RemoveLibraryCommandHandler(
     Repository<Library> libraryRepo,
     Repository<Installed> installedRepo,
-    GetLibrariesCommandBuilder builder) : ICommandHandler<GetLibrariesCommandArgs>
+    GetLibrariesCommandBuilder builder) : ICommandHandler
 {    
-    public async Task<Response<GetLibrariesCommandArgs>> Handle(CommandArgs args, CancellationToken ct)
+    public async Task<Response> Handle(CommandArgs args, CancellationToken ct)
     {
         var libraryPath = args.Get<string>("library").Trim();
-        var library = (await libraryRepo.GetAll(restrict: x => x.Path == libraryPath, ct: ct)).FirstOrDefault();
-        if (library == null) throw new();
-
+        var library = (await libraryRepo.GetAll(restrict: x => x.Path == libraryPath, ct: ct)).FirstOrDefault() ?? throw new();
         var isUsed = (await installedRepo.GetAll(restrict: x => x.LibraryId == library.Id, ct: ct)).Count != 0;
         if (isUsed) throw new();
 

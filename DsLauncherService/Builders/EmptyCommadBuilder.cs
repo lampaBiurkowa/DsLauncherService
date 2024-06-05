@@ -3,10 +3,10 @@ using DsLauncherService.Communication;
 
 namespace DsLauncherService.Builders;
 
-class EmptyCommandBuilder : ICommandBuilder<EmptyCommandArgs>
+class EmptyCommandBuilder : ICommandBuilder
 {
     public string Name => string.Empty;
 
-    public Task<Response<EmptyCommandArgs>> Build(CancellationToken ct) =>
-        Task.FromResult(new Response<EmptyCommandArgs>(Name, new()));
+    public Task<Response> Build(CancellationToken ct) =>
+        Task.FromResult(new Response(Name, new EmptyCommandArgs()));
 }

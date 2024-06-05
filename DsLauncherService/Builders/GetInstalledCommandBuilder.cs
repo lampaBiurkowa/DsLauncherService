@@ -5,12 +5,12 @@ using DsLauncherService.Storage;
 
 namespace DsLauncherService.Builders;
 
-class GetInstalledCommandBuilder(Repository<Installed> repo) : ICommandBuilder<GetInstalledCommandArgs>
+class GetInstalledCommandBuilder(Repository<Installed> repo) : ICommandBuilder
 {
     public string Name => "get-installed";
 
-    public async Task<Response<GetInstalledCommandArgs>> Build(CancellationToken ct) =>
-        new Response<GetInstalledCommandArgs>(Name, new()
+    public async Task<Response> Build(CancellationToken ct) =>
+        new Response(Name, new GetInstalledCommandArgs
         {
             Installed = (await repo.GetAll(ct: ct)).ToDictionary(x => x.ProductGuid, x => x.PackageGuid)
         });

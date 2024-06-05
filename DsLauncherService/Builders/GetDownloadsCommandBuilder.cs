@@ -4,10 +4,10 @@ using DsLauncherService.Services;
 
 namespace DsLauncherService.Builders;
 
-class GetDownloadsCommandBuilder(InstallationService installation) : ICommandBuilder<GetDownloadsCommandArgs>
+class GetDownloadsCommandBuilder(InstallationService installation) : ICommandBuilder
 {
     public string Name => "get-downloads";
 
-    public Task<Response<GetDownloadsCommandArgs>> Build(CancellationToken ct) =>
-        Task.FromResult(new Response<GetDownloadsCommandArgs>(Name, new() { Downloads = new(installation.GetCurrentlyBeingInstalled()) }));
+    public Task<Response> Build(CancellationToken ct) =>
+        Task.FromResult(new Response(Name, new GetDownloadsCommandArgs() { Downloads = new(installation.GetCurrentlyBeingInstalled()) }));
 }

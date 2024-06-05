@@ -5,15 +5,15 @@ using System.Text;
 
 namespace DsLauncherService.Communication;
 
-internal class CommandService<T> : BackgroundService where T : ICommandArgs
+internal class CommandService : BackgroundService
 {
     private readonly ServerProvider server;
-    private readonly CommandDispatcher<T> dispatcher;
+    private readonly CommandDispatcher dispatcher;
     private readonly HashSet<CommandExecutionMetadata> commands;
 
     private readonly object _lock = new();
 
-    public CommandService(ServerProvider server, CommandDispatcher<T> dispatcher)
+    public CommandService(ServerProvider server, CommandDispatcher dispatcher)
     {
         this.server = server;
         this.dispatcher = dispatcher;
@@ -60,7 +60,7 @@ internal class CommandService<T> : BackgroundService where T : ICommandArgs
 
                         if (!string.IsNullOrWhiteSpace(response.Name))
                         {
-                            await server.SendAsync(CommandParser.Serialize(response));
+                            await server.SendAsync(ResponseParser.Serialize(response));
                             execMetadata.ExecutionsRemaining--;
                         }
                         else

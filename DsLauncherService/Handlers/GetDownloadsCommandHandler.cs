@@ -1,13 +1,12 @@
-﻿using DsLauncherService.Args;
-using DsLauncherService.Builders;
+﻿using DsLauncherService.Builders;
 using DsLauncherService.Communication;
 
 namespace DsLauncherService.Handlers;
 
 [Command("get-downloads")]
-internal class GetDownloadsCommandHandler(GetDownloadsCommandBuilder builder) : ICommandHandler<GetDownloadsCommandArgs>
+internal class GetDownloadsCommandHandler(GetDownloadsCommandBuilder builder) : ICommandHandler
 { 
-    public async Task<Response<GetDownloadsCommandArgs>> Handle(CommandArgs args, CancellationToken ct) =>
+    public async Task<Response> Handle(CommandArgs args, CancellationToken ct) =>
         await builder.Build(ct);
     // {
     //     var cmd = new Command("get-downloads");

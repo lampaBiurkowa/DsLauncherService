@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using DibBase.Infrastructure;
 using DsLauncher.ApiClient;
-using DsLauncherService.Args;
 using DsLauncherService.Builders;
 using DsLauncherService.Communication;
 using DsLauncherService.Helpers;
@@ -14,9 +13,9 @@ namespace DsLauncherService.Handlers;
 internal class ExecuteCommandHandler(
     Repository<Installed> installedRepo,
     GameActivityService gameActivityService,
-    EmptyCommandBuilder builder) : ICommandHandler<EmptyCommandArgs>
+    EmptyCommandBuilder builder) : ICommandHandler
 { 
-    public async Task<Response<EmptyCommandArgs>> Handle(CommandArgs args, CancellationToken ct)
+    public async Task<Response> Handle(CommandArgs args, CancellationToken ct)
     {
         var productGuid = args.Get<Guid>("productGuid");
         var exePath = args.Get<string>("exePath");
