@@ -1,4 +1,5 @@
 ﻿using DibBase.Infrastructure;
+using DsLauncherService.Builders;
 using DsLauncherService.Communication;
 using DsLauncherService.Services;
 using DsLauncherService.Storage;
@@ -9,15 +10,17 @@ namespace DsLauncherService.Handlers;
 internal class InstallCommandHandler(
     Repository<Installed> installedRepo,
     Repository<Library> libraryRepo,
-    InstallationService installationService) : ICommandHandler
+    InstallationService installationService,
+    GetInstalledCommandBuilder builder) : ICommandHandler
 { 
-    public async Task<Command> Handle(CommandArgs args, CancellationToken ct)
+    public async Task<Response> Handle(CommandArgs args, CancellationToken ct)
     {
         var productGuid = args.Get<Guid>("productGuid");
+        var exePath = args.Get<string>("exePath");
         args.TryGet<Guid>("packageGuid", out var packageGuid);
         args.TryGet<string>("library", out var libraryName);
 
-        if (productGuid == default) return Command.Empty;
+        if (productGuid == default) throw new();
 
         var currentInstallation = (await installedRepo.GetAll(
             restrict: x => x.ProductGuid == productGuid,
@@ -27,19 +30,13 @@ internal class InstallCommandHandler(
         if (currentInstallation == null)
         {
             var passedLibrary = (await libraryRepo.GetAll(restrict: x => x.Path == libraryName, ct: ct)).FirstOrDefault() ?? throw new();
-            installationService.RegisterFullInstall(productGuid, passedLibrary, ct);
+            installationService.RegisterFullInstall(productGuid, passedLibrary, exePath, ct);
         }
         else if (packageGuid != default)
-            installationService.RegisterUpdateToVersion(currentInstallation, packageGuid, ct);
+            installationService.RegisterUpdateToVersion(currentInstallation, packageGuid, exePath, ct);
         else
-            installationService.RegisterUpdateToLatest(currentInstallation, ct);
+            installationService.RegisterUpdateToLatest(currentInstallation, exePath, ct);
 
-        return new Command("get-installed")
-        {
-            Args = 
-            {
-                { "get-installed", (await installedRepo.GetAll(ct: ct)).Select(x => $"{x.ProductGuid},{x.PackageGuid}") }
-            }
-        };
+        return await builder.Build(ct);
     }
 }

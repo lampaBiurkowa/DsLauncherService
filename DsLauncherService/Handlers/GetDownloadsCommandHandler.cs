@@ -1,17 +1,18 @@
-﻿using DsLauncherService.Communication;
-using DsLauncherService.Services;
+﻿using DsLauncherService.Builders;
+using DsLauncherService.Communication;
 
 namespace DsLauncherService.Handlers;
 
 [Command("get-downloads")]
-internal class GetDownloadsCommandHandler(InstallationService installationService) : ICommandHandler
+internal class GetDownloadsCommandHandler(GetDownloadsCommandBuilder builder) : ICommandHandler
 { 
-    public Task<Command> Handle(CommandArgs args, CancellationToken ct)
-    {
-        var cmd = new Command("get-downloads");
-        foreach (var status in installationService.GetCurrentlyBeingInstalled())
-            cmd.Args.Add(status.Key.ToString(), $"{status.Value.Percentage},{status.Value.Step}");
+    public async Task<Response> Handle(CommandArgs args, CancellationToken ct) =>
+        await builder.Build(ct);
+    // {
+    //     var cmd = new Command("get-downloads");
+    //     foreach (var status in installationService.GetCurrentlyBeingInstalled())
+    //         cmd.Args.Add(status.Key.ToString(), $"{status.Value.Percentage},{status.Value.Step}");
         
-        return cmd.Args.Count > 0 ? Task.FromResult(cmd) : Task.FromResult(Command.Empty);
-    }
+    //     return cmd.Args.Count > 0 ? Task.FromResult(cmd) : Task.FromResult(Command.Empty);
+    // }
 }

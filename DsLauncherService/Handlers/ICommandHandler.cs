@@ -4,5 +4,5 @@ namespace DsLauncherService.Handlers;
 
 internal interface ICommandHandler
 {
-    Task<Command> Handle(CommandArgs args, CancellationToken cancellationToken);
+    Task<Response> Handle(CommandArgs args, CancellationToken cancellationToken);
 }

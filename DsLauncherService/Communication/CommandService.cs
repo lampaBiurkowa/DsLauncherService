@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using DsLauncherService.Args;
+using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
 using System.Text;
 
@@ -59,7 +60,7 @@ internal class CommandService : BackgroundService
 
                         if (!string.IsNullOrWhiteSpace(response.Name))
                         {
-                            await server.SendAsync(CommandParser.Serialize(response));
+                            await server.SendAsync(ResponseParser.Serialize(response));
                             execMetadata.ExecutionsRemaining--;
                         }
                         else

@@ -1,74 +1,78 @@
 ﻿using System.Text;
+using DsLauncherService.Args;
+using Newtonsoft.Json;
 
-namespace DsLauncherService.Communication
+namespace DsLauncherService.Communication;
+
+internal static class CommandParser
 {
-    internal static class CommandParser
+    public static Command Deserialize(string value)
     {
-        public static Command Deserialize(string value)
+        using var reader = new StringReader(value);
+
+        string? commandName = reader.ReadLine();
+        if (string.IsNullOrEmpty(commandName))
         {
-            using var reader = new StringReader(value);
-
-            string? commandName = reader.ReadLine();
-            if (string.IsNullOrEmpty(commandName))
-            {
-                throw new FormatException("Invalid command name.");
-            }
-
-            var command = new Command(commandName)
-            {
-                Head = new CommandHead(DeserializeArgs(reader)),
-                Args = DeserializeArgs(reader)
-            };
-
-            return command;
+            throw new FormatException("Invalid command name.");
         }
 
-        public static string Serialize(Command command)
+        var command = new Command(commandName)
         {
-            var builder = new StringBuilder();
-            builder.AppendLine(command.Name);
+            Head = new CommandHead(DeserializeArgs(reader)),
+            Args = DeserializeArgs(reader)
+        };
 
-            if (command.Head.Count > 0)
-            {
-                builder.AppendLine(SerializeArgs(command.Head));
-            }
+        return command;
+    }
 
-            if (command.Args.Count > 0)
-            {
-                builder.AppendLine("");
-                builder.AppendLine(SerializeArgs(command.Args));
-            }
+    private static CommandArgs DeserializeArgs(StringReader reader)
+    {
+        var args = new CommandArgs();
 
-            return builder.ToString();
+        string? line;
+        while ((line = reader.ReadLine()) is not null)
+        {
+            if (string.IsNullOrWhiteSpace(line)) break;
+
+            int colonIndex = line.IndexOf(':');
+            if (colonIndex == -1) break;
+
+            string argName = line[..colonIndex];
+            string argValue = line[(colonIndex + 1)..];
+
+            args.Add(argName, argValue);
         }
 
-        private static CommandArgs DeserializeArgs(StringReader reader)
+        return args;
+    }
+}
+
+internal static class ResponseParser
+{
+    public static string Serialize(Response command)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine(command.Name);
+
+        if (command.Head.Count > 0)
         {
-            var args = new CommandArgs();
-
-            string? line;
-            while ((line = reader.ReadLine()) is not null)
-            {
-                if (string.IsNullOrWhiteSpace(line)) break;
-
-                int colonIndex = line.IndexOf(':');
-                if (colonIndex == -1) break;
-
-                string argName = line[..colonIndex];
-                string argValue = line[(colonIndex + 1)..];
-
-                args.Add(argName, argValue);
-            }
-
-            return args;
+            builder.AppendLine(SerializeArgs(command.Head));
         }
 
-        private static string SerializeArgs(CommandArgs args)
+        if (command.Args is not EmptyCommandArgs)
         {
-            return string.Join(Environment.NewLine, args.Select(arg =>
-            {
-                return $"{arg.Key}:{arg.Value}";
-            }));
+            builder.AppendLine("");
+            builder.AppendLine(JsonConvert.SerializeObject(command.Args));
         }
+
+        return builder.ToString();
+    }
+
+    private static string SerializeArgs(CommandArgs args)
+    {
+        return string.Join(Environment.NewLine, args.Select(arg =>
+        {
+            return $"{arg.Key}:{arg.Value}";
+        }));
     }
 }
