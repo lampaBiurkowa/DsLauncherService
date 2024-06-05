@@ -16,7 +16,6 @@ internal class InstallCommandHandler(
     public async Task<Response> Handle(CommandArgs args, CancellationToken ct)
     {
         var productGuid = args.Get<Guid>("productGuid");
-        var exePath = args.Get<string>("exePath");
         args.TryGet<Guid>("packageGuid", out var packageGuid);
         args.TryGet<string>("library", out var libraryName);
 
@@ -30,12 +29,12 @@ internal class InstallCommandHandler(
         if (currentInstallation == null)
         {
             var passedLibrary = (await libraryRepo.GetAll(restrict: x => x.Path == libraryName, ct: ct)).FirstOrDefault() ?? throw new();
-            installationService.RegisterFullInstall(productGuid, passedLibrary, exePath, ct);
+            installationService.RegisterFullInstall(productGuid, passedLibrary, ct);
         }
         else if (packageGuid != default)
-            installationService.RegisterUpdateToVersion(currentInstallation, packageGuid, exePath, ct);
+            installationService.RegisterUpdateToVersion(currentInstallation, packageGuid, ct);
         else
-            installationService.RegisterUpdateToLatest(currentInstallation, exePath, ct);
+            installationService.RegisterUpdateToLatest(currentInstallation, ct);
 
         return await builder.Build(ct);
     }
