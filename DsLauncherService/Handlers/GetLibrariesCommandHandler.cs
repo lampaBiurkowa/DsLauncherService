@@ -1,20 +1,12 @@
-﻿using DibBase.Infrastructure;
+﻿using DsLauncherService.Args;
+using DsLauncherService.Builders;
 using DsLauncherService.Communication;
-using DsLauncherService.Storage;
 
 namespace DsLauncherService.Handlers;
 
 [Command("get-libraries")]
-internal class GetLibrariesCommandHandler(Repository<Library> repo) : ICommandHandler
+internal class GetLibrariesCommandHandler(GetLibrariesCommandBuilder builder) : ICommandHandler<GetLibrariesCommandArgs>
 {
-    public async Task<Command> Handle(CommandArgs args, CancellationToken ct)
-    {
-        return new Command("get-libraries")
-        {
-            Args = 
-            {
-                { "libraries", (await repo.GetAll(ct: ct)).Select(x => $"{x.Path},{x.Name}") }
-            }
-        };
-    }
+    public async Task<Response<GetLibrariesCommandArgs>> Handle(CommandArgs args, CancellationToken ct) =>
+        await builder.Build(ct);
 }

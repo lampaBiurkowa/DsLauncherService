@@ -20,14 +20,14 @@ class InstallationService(
 
     public ConcurrentDictionary<Guid, UpdateStatus> GetCurrentlyBeingInstalled() => updates;
 
-    public void RegisterUpdateToVersion(Installed installed, Guid dstPackageGuid, CancellationToken ct) =>
-        Task.Run(() => DelegateInstallTask(installed.PackageGuid, () => DoUpdateToVersion(installed, dstPackageGuid, ct)), ct);
+    public void RegisterUpdateToVersion(Installed installed, Guid dstPackageGuid, string exePath, CancellationToken ct) =>
+        Task.Run(() => DelegateInstallTask(installed.PackageGuid, () => DoUpdateToVersion(installed, dstPackageGuid, exePath, ct)), ct);
 
-    public void RegisterUpdateToLatest(Installed installed, CancellationToken ct) =>
-        Task.Run(() => DelegateInstallTask(installed.PackageGuid, () => DoUpdateToLatest(installed, ct)), ct);
+    public void RegisterUpdateToLatest(Installed installed, string exePath, CancellationToken ct) =>
+        Task.Run(() => DelegateInstallTask(installed.PackageGuid, () => DoUpdateToLatest(installed, exePath, ct)), ct);
 
-    public void RegisterFullInstall(Guid productGuid, Library library, CancellationToken ct) =>
-        Task.Run(() => DelegateInstallTask(productGuid, () => DoFullInstall(productGuid, library, ct)), ct);
+    public void RegisterFullInstall(Guid productGuid, Library library, string exePath, CancellationToken ct) =>
+        Task.Run(() => DelegateInstallTask(productGuid, () => DoFullInstall(productGuid, library, exePath, ct)), ct);
 
     async Task DelegateInstallTask(Guid productGuid, Func<Task<bool>> task)
     {
@@ -43,28 +43,6 @@ class InstallationService(
         
         updates.Remove(productGuid, out var _);
     }
-
-    async Task<bool> DoFullInstall(Guid productGuid, Library library, CancellationToken ct)
-    {
-        return await ExecuteInstallTask(async (client, repo, stream) =>
-        {
-            var latestPackageGuid = await client.DownloadWhole(cache.GetToken() ?? throw new(), productGuid, PlatformResolver.GetPlatform(), stream, (o, progress) => SetUpdateState(productGuid, UpdateStep.Download, progress));
-            if (latestPackageGuid == default) throw new();
-
-            await repo.InsertAsync(new()
-            {
-                LibraryId = library.Id,
-                ProductGuid = productGuid,
-                PackageGuid = latestPackageGuid
-            }, ct);
-
-            var productPath = GetProductPath(productGuid, library.Path);
-            SetUpdateState(productGuid, UpdateStep.Install);
-            Install(productPath, stream);
-            SetUpdateState(productGuid, UpdateStep.Verification);
-            return await VerifyInstallation(productPath, latestPackageGuid, ct);
-        }, ct);
-    }
     
     async Task<bool> ExecuteInstallTask(Func<DsLauncherNdibApiClient, Repository<Installed>, MemoryStream, Task<bool>> task, CancellationToken ct)
     {
@@ -78,7 +56,30 @@ class InstallationService(
         return verified;
     }
 
-    async Task<bool> DoUpdateToVersion(Installed installed, Guid dstPackageGuid, CancellationToken ct)
+    async Task<bool> DoFullInstall(Guid productGuid, Library library, string exePath, CancellationToken ct)
+    {
+        return await ExecuteInstallTask(async (client, repo, stream) =>
+        {
+            var latestPackageGuid = await client.DownloadWhole(cache.GetToken() ?? throw new(), productGuid, PlatformResolver.GetPlatform(), stream, (o, progress) => SetUpdateState(productGuid, UpdateStep.Download, progress));
+            if (latestPackageGuid == default) throw new();
+
+            await repo.InsertAsync(new()
+            {
+                LibraryId = library.Id,
+                ProductGuid = productGuid,
+                PackageGuid = latestPackageGuid,
+                ExePath = exePath
+            }, ct);
+
+            var productPath = GetProductPath(productGuid, library.Path);
+            SetUpdateState(productGuid, UpdateStep.Install);
+            Install(productPath, stream);
+            SetUpdateState(productGuid, UpdateStep.Verification);
+            return await VerifyInstallation(productPath, latestPackageGuid, ct);
+        }, ct);
+    }
+
+    async Task<bool> DoUpdateToVersion(Installed installed, Guid dstPackageGuid, string exePath, CancellationToken ct)
     {
         return await ExecuteInstallTask(async (client, repo, stream) =>
         {
@@ -86,6 +87,7 @@ class InstallationService(
             await client.ChangeToVersion(cache.GetToken() ?? throw new(), sourceGuid, dstPackageGuid, PlatformResolver.GetPlatform(), stream, (o, progress) => SetUpdateState(installed.ProductGuid, UpdateStep.Download, progress));
 
             installed.PackageGuid = dstPackageGuid;
+            installed.ExePath = exePath;
             await repo.UpdateAsync(installed, ct);
 
             var productPath = GetProductPath(installed.ProductGuid, installed.Library!.Path);
@@ -97,7 +99,7 @@ class InstallationService(
         }, ct);
     }
 
-    async Task<bool> DoUpdateToLatest(Installed installed, CancellationToken ct)
+    async Task<bool> DoUpdateToLatest(Installed installed, string exePath, CancellationToken ct)
     {
         return await ExecuteInstallTask(async (client, repo, stream) =>
         {
@@ -106,6 +108,7 @@ class InstallationService(
             if (latestPackageGuid == default) throw new();
             
             installed.PackageGuid = latestPackageGuid;
+            installed.ExePath = exePath;
             await repo.UpdateAsync(installed, ct);
 
             var productPath = GetProductPath(installed.ProductGuid, installed.Library!.Path);

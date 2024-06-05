@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using DibBase.Infrastructure;
 using DsLauncher.ApiClient;
+using DsLauncherService.Args;
+using DsLauncherService.Builders;
 using DsLauncherService.Communication;
 using DsLauncherService.Helpers;
 using DsLauncherService.Services;
@@ -11,21 +13,20 @@ namespace DsLauncherService.Handlers;
 [Command("execute")]
 internal class ExecuteCommandHandler(
     Repository<Installed> installedRepo,
-    GameActivityService gameActivityService) : ICommandHandler
+    GameActivityService gameActivityService,
+    EmptyCommandBuilder builder) : ICommandHandler<EmptyCommandArgs>
 { 
-    public async Task<Command> Handle(CommandArgs args, CancellationToken ct)
+    public async Task<Response<EmptyCommandArgs>> Handle(CommandArgs args, CancellationToken ct)
     {
         var productGuid = args.Get<Guid>("productGuid");
         var exePath = args.Get<string>("exePath");
 
-        if (productGuid == default) return Command.Empty;
+        if (productGuid == default) throw new();
 
         var currentInstallation = (await installedRepo.GetAll(
             restrict: x => x.ProductGuid == productGuid,
             expand: [x => x.Library!],
-            ct: ct)).FirstOrDefault();
-
-        if (currentInstallation == null) return Command.Empty;
+            ct: ct)).FirstOrDefault() ?? throw new();
 
         exePath = Path.Combine(currentInstallation.Library!.Path, productGuid.ToString(), exePath);
         if (PlatformResolver.GetPlatform() == Platform.Linux)
@@ -37,7 +38,7 @@ internal class ExecuteCommandHandler(
 
         var executeProcess = CreateProces(exePath, workingDir: Path.GetDirectoryName(exePath));
         await gameActivityService.StartGame(productGuid, executeProcess, ct);
-        return Command.Empty;
+        return await builder.Build(ct);
     }
 
     static Process CreateProces(string command, string? args = null, string? workingDir = null)

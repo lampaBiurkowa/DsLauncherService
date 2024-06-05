@@ -31,6 +31,7 @@ namespace DsLauncherService
                 services.AddSingleton<CacheService>();
                 services.AddMemoryCache();
                 services.InstallCommandHandlers();
+                services.InstallCommandBuilders();
 
                 var entityTypes = new List<Type>();
                 var assemblies = AppDomain.CurrentDomain.GetAssemblies();

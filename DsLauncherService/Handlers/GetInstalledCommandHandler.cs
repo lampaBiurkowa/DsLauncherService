@@ -1,20 +1,12 @@
-using DibBase.Infrastructure;
+using DsLauncherService.Args;
+using DsLauncherService.Builders;
 using DsLauncherService.Communication;
-using DsLauncherService.Storage;
 
 namespace DsLauncherService.Handlers;
 
 [Command("get-installed")]
-internal class GetInstalledCommandHandler(Repository<Installed> repo) : ICommandHandler
+internal class GetInstalledCommandHandler(GetInstalledCommandBuilder builder) : ICommandHandler<GetInstalledCommandArgs>
 {
-    public async Task<Command> Handle(CommandArgs args, CancellationToken ct)
-    {
-        return new Command("get-installed")
-        {
-            Args = 
-            {
-                { "get-installed", (await repo.GetAll(ct: ct)).Select(x => $"{x.ProductGuid},{x.PackageGuid}") }
-            }
-        };
-    }
+    public async Task<Response<GetInstalledCommandArgs>> Handle(CommandArgs args, CancellationToken ct) =>
+        await builder.Build(ct);
 }

@@ -1,4 +1,6 @@
 ﻿using DsCore.ApiClient;
+using DsLauncherService.Args;
+using DsLauncherService.Builders;
 using DsLauncherService.Communication;
 using DsLauncherService.Services;
 
@@ -8,9 +10,10 @@ namespace DsLauncherService.Handlers;
 internal class LoginCommandHandler(
     DsCoreClientFactory clientFactory,
     CacheService cache,
-    GameActivityService gameActivityService) : ICommandHandler
+    GameActivityService gameActivityService,
+    GetCredentialsCommandBuilder builder) : ICommandHandler<GetCredentialsCommandArgs>
 {    
-    public async Task<Command> Handle(CommandArgs args, CancellationToken ct)
+    public async Task<Response<GetCredentialsCommandArgs>> Handle(CommandArgs args, CancellationToken ct)
     {
         var userGuid = args.Get<Guid>("userId");
         var passwordBase64 = args.Get<string>("passwordBase64");
@@ -20,14 +23,7 @@ internal class LoginCommandHandler(
         cache.SetUser(userGuid);
 
         _ = gameActivityService.SendLocalActivities(userGuid, ct);
-        return new Command("credentials")
-        {
-            Args =
-            {
-                { "token", token },
-                { "userGuid", userGuid }
-            }
-        };
+        return await builder.Build(ct);
     }
 }
 
