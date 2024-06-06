@@ -32,6 +32,21 @@ class InstallationService(
     public void RegisterInstallationRepair(Installed installed, CancellationToken ct) =>
         Task.Run(() => DelegateInstallTask(installed.PackageGuid, () => DoInstallationRepair(installed, ct)), ct);
 
+    public async Task Uninstall(Guid productGuid, CancellationToken ct)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var repo = scope.ServiceProvider.GetRequiredService<Repository<Installed>>();
+
+        var installed = (await repo.GetAll(
+            restrict: x => x.ProductGuid == productGuid,
+            expand: [x => x.Library!], ct: ct)).FirstOrDefault() ?? throw new();
+
+        var productPath = GetProductPath(productGuid, installed.Library!.Path);
+        await repo.DeleteAsync(installed.Id, ct);
+        Directory.Delete(productPath, true);
+        await repo.CommitAsync(ct);
+    }
+
     async Task DelegateInstallTask(Guid productGuid, Func<Task<bool>> task)
     {
         if (updates.ContainsKey(productGuid)) throw new();
@@ -47,14 +62,17 @@ class InstallationService(
         updates.Remove(productGuid, out var _);
     }
     
-    async Task<bool> ExecuteInstallTask(Func<DsLauncherNdibApiClient, Repository<Installed>, MemoryStream, Task<bool>> task, CancellationToken ct)
+    async Task<bool> ExecuteInstallTask(Func<DsLauncherNdibApiClient, Repository<Installed>, MemoryStream, Task<Installed>> task, CancellationToken ct)
     {
         using var scope = serviceProvider.CreateScope();
         var repo = scope.ServiceProvider.GetRequiredService<Repository<Installed>>();
         using var stream = new MemoryStream();
         var client = new DsLauncherNdibApiClient(launcherOptions);
 
-        var verified = await task(client, repo, stream);
+        var installed = await task(client, repo, stream);
+
+        SetUpdateState(installed.ProductGuid, UpdateStep.Verification);
+        var verified = await VerifyInstallation(installed, ct);
         await repo.CommitAsync(ct);
         return verified;
     }
@@ -66,19 +84,19 @@ class InstallationService(
             var latestPackageGuid = await client.DownloadWhole(cache.GetToken() ?? throw new(), productGuid, PlatformResolver.GetPlatform(), stream, (o, progress) => SetUpdateState(productGuid, UpdateStep.Download, progress));
             if (latestPackageGuid == default) throw new();
 
-            await repo.InsertAsync(new()
+            var installed = new Installed
             {
-                LibraryId = library.Id,
+                Library = library,
                 ProductGuid = productGuid,
                 PackageGuid = latestPackageGuid,
                 ExePath = await GetExePath(latestPackageGuid, ct)
-            }, ct);
+            };
+            await repo.InsertAsync(installed, ct);
 
             var productPath = GetProductPath(productGuid, library.Path);
             SetUpdateState(productGuid, UpdateStep.Install);
             Install(productPath, stream);
-            SetUpdateState(productGuid, UpdateStep.Verification);
-            return await VerifyInstallation(productPath, latestPackageGuid, ct);
+            return installed;
         }, ct);
     }
 
@@ -97,8 +115,7 @@ class InstallationService(
             SetUpdateState(installed.ProductGuid, UpdateStep.Install);
             Install(productPath, stream);
             RemoveFiles(productPath, await GetFilesToRemove(sourceGuid, dstPackageGuid, ct));
-            SetUpdateState(installed.ProductGuid, UpdateStep.Verification);
-            return await VerifyInstallation(productPath, dstPackageGuid, ct);
+            return installed;
         }, ct);
     }
 
@@ -118,10 +135,7 @@ class InstallationService(
             SetUpdateState(installed.ProductGuid, UpdateStep.Install);
             Install(productPath, stream);
             RemoveFiles(productPath, await GetFilesToRemove(sourceGuid, latestPackageGuid, ct));
-            SetUpdateState(installed.ProductGuid, UpdateStep.Verification);
-            var verified = await VerifyInstallation(productPath, latestPackageGuid, ct);
-            
-            return verified;
+            return installed;
         }, ct);
     }
 
@@ -145,8 +159,7 @@ class InstallationService(
             var productPath = GetProductPath(installed.ProductGuid, installed.Library!.Path);
             SetUpdateState(installed.ProductGuid, UpdateStep.Install);
             Install(productPath, stream);
-            SetUpdateState(installed.ProductGuid, UpdateStep.Verification);
-            return await VerifyInstallation(productPath, latestPackageGuid, ct);
+            return installed;
         }, ct);
     }
 
@@ -185,10 +198,12 @@ class InstallationService(
         return src.Keys.Except(dst.Keys).ToList();
     }
 
-    async Task<bool> VerifyInstallation(string productPath, Guid packageGuid, CancellationToken ct)
+    async Task<bool> VerifyInstallation(Installed installed, CancellationToken ct)
     {
-        var remoteHash = await GetClient().Ndib_GetVerificationHashAsync(packageGuid, PlatformResolver.GetPlatform(), ct);
+        var productPath = GetProductPath(installed.ProductGuid, installed.Library!.Path);
+        var remoteHash = await GetClient().Ndib_GetVerificationHashAsync(installed.PackageGuid, PlatformResolver.GetPlatform(), ct);
         var localHash = ProductHashHandler.GetFileHashes(productPath, remoteHash.Keys.ToList());
+
         return remoteHash.Keys.Count == localHash.Keys.Count && remoteHash.Keys.All(k => localHash.ContainsKey(k) && localHash[k] == remoteHash[k]);
     }
 
