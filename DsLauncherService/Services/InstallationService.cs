@@ -86,7 +86,7 @@ class InstallationService(
 
             var installed = new Installed
             {
-                Library = library,
+                LibraryId = library.Id,
                 ProductGuid = productGuid,
                 PackageGuid = latestPackageGuid,
                 ExePath = await GetExePath(latestPackageGuid, ct)
@@ -96,6 +96,7 @@ class InstallationService(
             var productPath = GetProductPath(productGuid, library.Path);
             SetUpdateState(productGuid, UpdateStep.Install);
             Install(productPath, stream);
+            installed.Library = library; //HZD - puttin after commit as this property is needed later :|
             return installed;
         }, ct);
     }
