@@ -18,8 +18,6 @@ internal class ExecuteCommandHandler(
     public async Task<Response> Handle(CommandArgs args, CancellationToken ct)
     {
         var productGuid = args.Get<Guid>("productGuid");
-        var exePath = args.Get<string>("exePath");
-
         if (productGuid == default) throw new();
 
         var currentInstallation = (await installedRepo.GetAll(
@@ -27,7 +25,7 @@ internal class ExecuteCommandHandler(
             expand: [x => x.Library!],
             ct: ct)).FirstOrDefault() ?? throw new();
 
-        exePath = Path.Combine(currentInstallation.Library!.Path, productGuid.ToString(), exePath);
+        var exePath = Path.Combine(currentInstallation.Library!.Path, productGuid.ToString(), currentInstallation.ExePath);
         if (PlatformResolver.GetPlatform() == Platform.Linux)
         {
             var markAsExe = CreateProces("chmod", $"+x {exePath}");
