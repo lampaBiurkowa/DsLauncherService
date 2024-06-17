@@ -21,7 +21,10 @@ class GetDownloadsCommandBuilder(InstallationService installation) : ICommandBui
         if (downloads.Keys.Count == 0)
         {
             if (ResultsTimer.Elapsed > timeout)
+            {
+                ResultsTimer.Reset();
                 return Task.FromResult(new Response(string.Empty, new EmptyCommandArgs()));
+            }
         }
         else 
             ResultsTimer.Restart();
