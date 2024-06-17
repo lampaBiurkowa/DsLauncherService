@@ -39,7 +39,7 @@ class InstallationService(
 
         var installed = (await repo.GetAll(
             restrict: x => x.ProductGuid == productGuid,
-            expand: [x => x.Library!], ct: ct)).FirstOrDefault() ?? throw new();
+            expand: [x => x.Library], ct: ct)).FirstOrDefault() ?? throw new();
 
         var productPath = GetProductPath(productGuid, installed.Library!.Path);
         await repo.DeleteAsync(installed.Id, ct);
