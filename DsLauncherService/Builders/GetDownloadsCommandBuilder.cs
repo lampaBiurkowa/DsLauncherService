@@ -9,7 +9,7 @@ class GetDownloadsCommandBuilder(InstallationService installation) : ICommandBui
 {
     public string Name => "get-downloads";
     
-    readonly TimeSpan timeout = TimeSpan.FromSeconds(2);
+    readonly TimeSpan timeout = TimeSpan.FromSeconds(5);
     static readonly Stopwatch ResultsTimer = new();
 
     public Task<Response> Build(CancellationToken ct)
