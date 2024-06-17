@@ -1,5 +1,4 @@
 ﻿using DibBase.Infrastructure;
-using DsLauncherService.Args;
 using DsLauncherService.Builders;
 using DsLauncherService.Communication;
 using DsLauncherService.Storage;
@@ -14,7 +13,7 @@ internal class AddLibraryCommandHandler(Repository<Library> libraryRepo, GetLibr
         var libraryPath = args.Get<string>("library").Trim();
         var libraryName = args.Get<string>("name").Trim();
         if (Directory.Exists(libraryPath) && !IsDirectoryEmpty(libraryPath))
-            throw new();
+            throw new("Direcotry not empty");
         
         await libraryRepo.InsertAsync(new() { Path = libraryPath, Name = libraryName }, ct);
         await libraryRepo.CommitAsync(ct);

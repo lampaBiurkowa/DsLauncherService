@@ -11,6 +11,7 @@ public class DsLauncherServiceContext : DibContext
     public DbSet<Settings> Settings { get; set; }
     public DbSet<Theme> Theme { get; set; }
     public DbSet<Installed> Installed { get; set; }
+    public DbSet<Recents> Recents { get; set; }
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.UseSqlite("Data Source=Database.db");

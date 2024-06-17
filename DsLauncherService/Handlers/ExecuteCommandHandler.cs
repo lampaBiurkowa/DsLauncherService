@@ -12,9 +12,13 @@ namespace DsLauncherService.Handlers;
 [Command("execute")]
 internal class ExecuteCommandHandler(
     Repository<Installed> installedRepo,
+    Repository<Recents> recentsRepo,
     GameActivityService gameActivityService,
+    CacheService cache,
     EmptyCommandBuilder builder) : ICommandHandler
 { 
+    const int MAX_RECENT_GAMES = 5;
+
     public async Task<Response> Handle(CommandArgs args, CancellationToken ct)
     {
         var productGuid = args.Get<Guid>("productGuid");
@@ -22,7 +26,7 @@ internal class ExecuteCommandHandler(
 
         var currentInstallation = (await installedRepo.GetAll(
             restrict: x => x.ProductGuid == productGuid,
-            expand: [x => x.Library!],
+            expand: [x => x.Library],
             ct: ct)).FirstOrDefault() ?? throw new();
 
         var exePath = Path.Combine(currentInstallation.Library!.Path, productGuid.ToString(), currentInstallation.ExePath);
@@ -35,6 +39,19 @@ internal class ExecuteCommandHandler(
 
         var executeProcess = CreateProces(exePath, workingDir: Path.GetDirectoryName(exePath));
         await gameActivityService.StartGame(productGuid, executeProcess, ct);
+
+        var recents = (await recentsRepo.GetAll(restrict: x => x.UserGuid == cache.GetUser(), ct: ct)).FirstOrDefault();
+        var isFirstGame = recents == null;
+        recents ??= new Recents { UserGuid = cache.GetUser() ?? throw new() };
+        recents.ProductGuids.Remove(currentInstallation.ProductGuid);
+        recents.ProductGuids.Insert(0, currentInstallation.ProductGuid);
+        recents.ProductGuids = recents.ProductGuids.GetRange(0, Math.Min(recents.ProductGuids.Count, MAX_RECENT_GAMES));
+        if (isFirstGame)
+            await recentsRepo.InsertAsync(recents, ct);
+        else
+            await recentsRepo.UpdateAsync(recents, ct);
+        await recentsRepo.CommitAsync(ct);
+
         return await builder.Build(ct);
     }
 
