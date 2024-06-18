@@ -71,7 +71,6 @@ class InstallationService(
 
         var installed = await task(client, repo, stream);
 
-        SetUpdateState(installed.ProductGuid, UpdateStep.Verification);
         var verified = await VerifyInstallation(installed, ct);
         await repo.CommitAsync(ct);
         return verified;
@@ -94,7 +93,7 @@ class InstallationService(
             await repo.InsertAsync(installed, ct);
 
             var productPath = GetProductPath(productGuid, library.Path);
-            SetUpdateState(productGuid, UpdateStep.Install);
+            SetUpdateState(productGuid, UpdateStep.Finalizing);
             Install(productPath, stream);
             installed.Library = library; //HZD - puttin after commit as this property is needed later :|
             return installed;
@@ -113,7 +112,7 @@ class InstallationService(
             await repo.UpdateAsync(installed, ct);
 
             var productPath = GetProductPath(installed.ProductGuid, installed.Library!.Path);
-            SetUpdateState(installed.ProductGuid, UpdateStep.Install);
+            SetUpdateState(installed.ProductGuid, UpdateStep.Finalizing);
             Install(productPath, stream);
             RemoveFiles(productPath, await GetFilesToRemove(sourceGuid, dstPackageGuid, ct));
             return installed;
@@ -133,7 +132,7 @@ class InstallationService(
             await repo.UpdateAsync(installed, ct);
 
             var productPath = GetProductPath(installed.ProductGuid, installed.Library!.Path);
-            SetUpdateState(installed.ProductGuid, UpdateStep.Install);
+            SetUpdateState(installed.ProductGuid, UpdateStep.Finalizing);
             Install(productPath, stream);
             RemoveFiles(productPath, await GetFilesToRemove(sourceGuid, latestPackageGuid, ct));
             return installed;
@@ -158,7 +157,7 @@ class InstallationService(
             await repo.UpdateAsync(installed, ct);
 
             var productPath = GetProductPath(installed.ProductGuid, installed.Library!.Path);
-            SetUpdateState(installed.ProductGuid, UpdateStep.Install);
+            SetUpdateState(installed.ProductGuid, UpdateStep.Finalizing);
             Install(productPath, stream);
             return installed;
         }, ct);
@@ -228,7 +227,7 @@ class InstallationService(
 
     DsLauncherClient GetClient() => clientFactory.CreateClient(cache.GetToken() ?? throw new());
 
-    void SetUpdateState(Guid productGuid, UpdateStep step, float percentage = 0)
+    void SetUpdateState(Guid productGuid, UpdateStep step, float percentage = 100)
     {
         if (updates.TryGetValue(productGuid, out UpdateStatus? value))
         {

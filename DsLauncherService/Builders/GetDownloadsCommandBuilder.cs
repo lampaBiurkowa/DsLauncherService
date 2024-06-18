@@ -17,7 +17,6 @@ class GetDownloadsCommandBuilder(InstallationService installation) : ICommandBui
         if (!ResultsTimer.IsRunning) ResultsTimer.Start();
 
         var downloads = installation.GetCurrentlyBeingInstalled();
-        Console.WriteLine($"ada {downloads.Keys.Count} {ResultsTimer.Elapsed}");
         if (downloads.Keys.Count == 0)
         {
             if (ResultsTimer.Elapsed > timeout)

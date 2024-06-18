@@ -1,6 +1,6 @@
 namespace DsLauncherService.Models;
 
-internal enum UpdateStep { Download, Install, Verification }
+internal enum UpdateStep { Download, Finalizing }
 
 internal class UpdateStatus
 {
