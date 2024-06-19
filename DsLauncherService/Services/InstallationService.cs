@@ -26,8 +26,8 @@ class InstallationService(
     public void RegisterUpdateToLatest(Installed installed, CancellationToken ct) =>
         Task.Run(() => DelegateInstallTask(installed.PackageGuid, () => DoUpdateToLatest(installed, ct)), ct);
 
-    public void RegisterFullInstall(Guid productGuid, Library library, CancellationToken ct) =>
-        Task.Run(() => DelegateInstallTask(productGuid, () => DoFullInstall(productGuid, library, ct)), ct);
+    public void RegisterFullInstall(Guid productGuid, Library library, Guid packageGuid = default, CancellationToken ct = default) =>
+        Task.Run(() => DelegateInstallTask(productGuid, () => DoFullInstall(productGuid, library, packageGuid, ct)), ct);
 
     public void RegisterInstallationRepair(Installed installed, CancellationToken ct) =>
         Task.Run(() => DelegateInstallTask(installed.PackageGuid, () => DoInstallationRepair(installed, ct)), ct);
@@ -86,19 +86,23 @@ class InstallationService(
         return verified;
     }
 
-    async Task<bool> DoFullInstall(Guid productGuid, Library library, CancellationToken ct)
+    async Task<bool> DoFullInstall(Guid productGuid, Library library, Guid packageGuid = default, CancellationToken ct = default)
     {
         return await ExecuteInstallTask(async (client, repo, stream) =>
         {
-            var latestPackageGuid = await client.DownloadWhole(cache.GetToken() ?? throw new(), productGuid, PlatformResolver.GetPlatform(), stream, (o, progress) => SetUpdateState(productGuid, UpdateStep.Download, progress));
-            if (latestPackageGuid == default) throw new();
+            if (packageGuid == default)
+                packageGuid = await client.DownloadWhole(cache.GetToken() ?? throw new(), productGuid, PlatformResolver.GetPlatform(), stream, (o, progress) => SetUpdateState(productGuid, UpdateStep.Download, progress));
+            else
+                await client.DownloadWholeVersion(cache.GetToken() ?? throw new(), productGuid, PlatformResolver.GetPlatform(), packageGuid, stream, (o, progress) => SetUpdateState(productGuid, UpdateStep.Download, progress));
+
+            if (packageGuid == default) throw new();
 
             var installed = new Installed
             {
                 LibraryId = library.Id,
                 ProductGuid = productGuid,
-                PackageGuid = latestPackageGuid,
-                ExePath = await GetExePath(latestPackageGuid, ct)
+                PackageGuid = packageGuid,
+                ExePath = await GetExePath(packageGuid, ct)
             };
             await repo.InsertAsync(installed, ct);
 
@@ -153,7 +157,7 @@ class InstallationService(
     {
         return await ExecuteInstallTask(async (client, repo, stream) =>
         {
-            var latestPackageGuid = await client.DownloadWholeVersion(
+            await client.DownloadWholeVersion(
                 cache.GetToken() ?? throw new(),
                 installed.ProductGuid,
                 PlatformResolver.GetPlatform(),
@@ -161,9 +165,7 @@ class InstallationService(
                 stream,
                 (o, progress) => SetUpdateState(installed.ProductGuid, UpdateStep.Download, progress));
                 
-            if (latestPackageGuid == default) throw new();
-
-            installed.ExePath = await GetExePath(latestPackageGuid, ct);
+            installed.ExePath = await GetExePath(installed.PackageGuid, ct);
             await repo.UpdateAsync(installed, ct);
 
             var productPath = GetProductPath(installed.ProductGuid, installed.Library!.Path);
@@ -253,7 +255,7 @@ class InstallationService(
 
     async Task<string> GetExePath(Guid packageGuid, CancellationToken ct)
     {
-        var package = await GetClient().Package_Get2Async(packageGuid, ct);
+        var package = await GetClient().Package_GetAsync(packageGuid, ct);
         return PlatformResolver.GetPlatform() switch
         {
             Platform.Win => package.WindowsExePath,

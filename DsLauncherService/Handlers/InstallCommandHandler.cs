@@ -29,7 +29,7 @@ internal class InstallCommandHandler(
         if (currentInstallation == null)
         {
             var passedLibrary = (await libraryRepo.GetAll(restrict: x => x.Path == libraryName, ct: ct)).FirstOrDefault() ?? throw new();
-            installationService.RegisterFullInstall(productGuid, passedLibrary, ct);
+            installationService.RegisterFullInstall(productGuid, passedLibrary, packageGuid, ct);
         }
         else if (packageGuid != default)
             installationService.RegisterUpdateToVersion(currentInstallation, packageGuid, ct);
