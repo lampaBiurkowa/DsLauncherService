@@ -46,22 +46,30 @@ public class GameActivityService(
     {
         var activities = await repo.GetAll(restrict: x => x.UserGuid == userGuid, ct: ct);
         foreach (var activity in activities)
-        {
-            await SendActivity(activity, ct);
-            await repo.DeleteAsync(activity.Id, ct);
-        }
+            if (await SendActivity(activity, ct))
+                await repo.DeleteAsync(activity.Id, ct);
+
         await repo.CommitAsync(ct);
     }
 
-    async Task SendActivity(Storage.Activity activity, CancellationToken ct)
+    async Task<bool> SendActivity(Storage.Activity activity, CancellationToken ct)
     {
-        await GetClient().Activity_ReportActivityAsync(new()
+        try
         {
-            StartDate = activity.StarDate,
-            EndDate = activity.EndDate,
-            ProductGuid = activity.ProductGuid,
-            UserGuid = activity.UserGuid,
-        }, ct);
+            await GetClient().Activity_ReportActivityAsync(new()
+            {
+                StartDate = activity.StarDate,
+                EndDate = activity.EndDate,
+                ProductGuid = activity.ProductGuid,
+                UserGuid = activity.UserGuid,
+            }, ct);
+        }
+        catch
+        {
+            return false;
+        }
+
+        return true;
     }
 
     protected override async Task ExecuteAsync(CancellationToken ct)
@@ -81,19 +89,26 @@ public class GameActivityService(
         await dbLock.WaitAsync(ct);
         try
         {
-            var activity = await repo.GetById(currentActivity.LocalDataId, ct: ct);
-            if (activity != null)
-            {
-                activity.EndDate = DateTime.UtcNow;
-                await repo.UpdateAsync(activity, ct);
-                await SendActivity(activity, ct);
-                await repo.CommitAsync(ct);
-            }
+            await ReportActivity(currentActivity, ct);
         }
         finally
         {
             dbLock.Release();
         }
+    }
+
+    async Task<bool> ReportActivity(CurrentActivity currentActivity, CancellationToken ct = default)
+    {
+        var activity = await repo.GetById(currentActivity.LocalDataId, ct: ct);
+        if (activity != null)
+        {
+            activity.EndDate = DateTime.UtcNow;
+            await repo.UpdateAsync(activity, ct);
+            await repo.CommitAsync(ct);
+            return await SendActivity(activity, ct);
+        }
+        
+        return false;
     }
 
     async void OnProcessExit(object? sender, EventArgs e)
@@ -104,8 +119,11 @@ public class GameActivityService(
             await dbLock.WaitAsync();
             try
             {
-                await repo.DeleteAsync(currentActivity.LocalDataId, default);
-                await repo.CommitAsync(default);
+                if (await ReportActivity(currentActivity, default))
+                {
+                    await repo.DeleteAsync(currentActivity.LocalDataId, default);
+                    await repo.CommitAsync(default);
+                }
             }
             finally
             {

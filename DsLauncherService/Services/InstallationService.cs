@@ -35,16 +35,26 @@ class InstallationService(
     public async Task Uninstall(Guid productGuid, CancellationToken ct)
     {
         using var scope = serviceProvider.CreateScope();
-        var repo = scope.ServiceProvider.GetRequiredService<Repository<Installed>>();
+        var installedRepo = scope.ServiceProvider.GetRequiredService<Repository<Installed>>();
+        var recentsRepo = scope.ServiceProvider.GetRequiredService<Repository<Recents>>();
 
-        var installed = (await repo.GetAll(
+        var installed = (await installedRepo.GetAll(
             restrict: x => x.ProductGuid == productGuid,
             expand: [x => x.Library], ct: ct)).FirstOrDefault() ?? throw new();
 
         var productPath = GetProductPath(productGuid, installed.Library!.Path);
-        await repo.DeleteAsync(installed.Id, ct);
+        await installedRepo.DeleteAsync(installed.Id, ct);
         Directory.Delete(productPath, true);
-        await repo.CommitAsync(ct);
+
+        var recents = await recentsRepo.GetAll(ct: ct);
+        foreach (var r in recents)
+            if (r.ProductGuids.Contains(installed.ProductGuid))
+            {
+                r.ProductGuids.RemoveAll(x => x == installed.ProductGuid);
+                await recentsRepo.UpdateAsync(r, ct);
+            }
+
+        await installedRepo.CommitAsync(ct);
     }
 
     async Task DelegateInstallTask(Guid productGuid, Func<Task<bool>> task)

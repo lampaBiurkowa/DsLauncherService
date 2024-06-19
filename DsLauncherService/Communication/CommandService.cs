@@ -71,6 +71,7 @@ internal class CommandService : BackgroundService
                     catch (Exception e)
                     {
                         Console.WriteLine(e.StackTrace);
+                        execMetadata.ExecutionsRemaining--;
                     }
                     finally
                     {
@@ -78,11 +79,9 @@ internal class CommandService : BackgroundService
                     }
                 }
             }));
-
-            await Task.WhenAll(tasks);
-
+            
+            await Task.WhenAll(tasks.Append(Task.Delay(TimeSpan.FromMilliseconds(10), stoppingToken)));
             stopwatch.Restart();
-            await Task.Delay(TimeSpan.FromMilliseconds(10), stoppingToken);
         }
     }
 }
