@@ -80,8 +80,8 @@ internal class CommandService : BackgroundService
                 }
             }));
             
-            await Task.WhenAll(tasks.Append(Task.Delay(TimeSpan.FromMilliseconds(10), stoppingToken)));
             stopwatch.Restart();
+            await Task.WhenAll(tasks.Append(Task.Delay(10, stoppingToken)));
         }
     }
 }
