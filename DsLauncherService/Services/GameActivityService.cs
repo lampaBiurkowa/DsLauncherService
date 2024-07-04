@@ -85,7 +85,6 @@ public class GameActivityService(
     {
         var currentActivity = Interlocked.CompareExchange(ref runningGame, null, null);
         if (currentActivity == null) return;
-        
         await dbLock.WaitAsync(ct);
         try
         {
@@ -107,7 +106,6 @@ public class GameActivityService(
             await repo.CommitAsync(ct);
             return await SendActivity(activity, ct);
         }
-        
         return false;
     }
 

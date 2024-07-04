@@ -244,10 +244,7 @@ class InstallationService(
         if (updates.TryGetValue(productGuid, out UpdateStatus? value))
         {
             if (step != value.Step || percentage >= value.Percentage)
-            {
                 value.Percentage = percentage;
-                Console.WriteLine($"{productGuid} {percentage} {step}");
-            }
 
             value.Step = step;
         }
