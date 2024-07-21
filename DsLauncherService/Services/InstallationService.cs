@@ -255,9 +255,9 @@ class InstallationService(
         var package = await GetClient().Package_GetAsync(packageGuid, ct);
         return PlatformResolver.GetPlatform() switch
         {
-            Platform.Win => package.WindowsExePath,
-            Platform.Linux => package.LinuxExePath,
-            Platform.Mac => package.MacExePath,
+            Platform.Win => package.WindowsExePath ?? string.Empty,
+            Platform.Linux => package.LinuxExePath ?? string.Empty,
+            Platform.Mac => package.MacExePath ?? string.Empty,
             _ => throw new()
         };
     }

@@ -10,7 +10,7 @@ public class Installed : Entity
     public Guid PackageGuid { get; set; }
     public Library? Library { get; set; }
     public long LibraryId { get; set; }
-    public required string ExePath { get; set; }
+    public string ExePath { get; set; } = string.Empty;
 }
 
 public class InstalledConfiguration : IEntityTypeConfiguration<Installed>
