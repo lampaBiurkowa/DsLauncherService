@@ -5,6 +5,7 @@ using DsLauncher.ApiClient;
 using DsLauncherService.Helpers;
 using DsLauncherService.Models;
 using DsLauncherService.Storage;
+using DsNdib.ApiClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -12,9 +13,10 @@ namespace DsLauncherService.Services;
 
 class InstallationService(
     CacheService cache,
-    DsLauncherClientFactory clientFactory,
+    DsLauncherClientFactory launcherClientFactory,
+    DsNdibClientFactory ndibClientFactory,
     IServiceProvider serviceProvider,
-    IOptions<DsLauncherOptions> launcherOptions)
+    IOptions<DsNdibOptions> ndibOptions)
 {
     readonly ConcurrentDictionary<Guid, UpdateStatus> updates = [];
 
@@ -72,12 +74,12 @@ class InstallationService(
         updates.Remove(productGuid, out var _);
     }
     
-    async Task<bool> ExecuteInstallTask(Func<DsLauncherNdibApiClient, Repository<Installed>, MemoryStream, Task<Installed>> task, CancellationToken ct)
+    async Task<bool> ExecuteInstallTask(Func<DsNdibDownloadClient, Repository<Installed>, MemoryStream, Task<Installed>> task, CancellationToken ct)
     {
         using var scope = serviceProvider.CreateScope();
         var repo = scope.ServiceProvider.GetRequiredService<Repository<Installed>>();
         using var stream = new MemoryStream();
-        var client = new DsLauncherNdibApiClient(launcherOptions);
+        var client = new DsNdibDownloadClient(ndibOptions);
 
         var installed = await task(client, repo, stream);
 
@@ -128,7 +130,7 @@ class InstallationService(
             var productPath = GetProductPath(installed.ProductGuid, installed.Library!.Path);
             SetUpdateState(installed.ProductGuid, UpdateStep.Finalizing);
             Install(productPath, stream);
-            RemoveFiles(productPath, await GetFilesToRemove(sourceGuid, dstPackageGuid, ct));
+            RemoveFiles(productPath, await GetFilesToRemove(installed.ProductGuid, sourceGuid, dstPackageGuid, ct));
             return installed;
         }, ct);
     }
@@ -148,7 +150,7 @@ class InstallationService(
             var productPath = GetProductPath(installed.ProductGuid, installed.Library!.Path);
             SetUpdateState(installed.ProductGuid, UpdateStep.Finalizing);
             Install(productPath, stream);
-            RemoveFiles(productPath, await GetFilesToRemove(sourceGuid, latestPackageGuid, ct));
+            RemoveFiles(productPath, await GetFilesToRemove(installed.ProductGuid, sourceGuid, latestPackageGuid, ct));
             return installed;
         }, ct);
     }
@@ -198,10 +200,10 @@ class InstallationService(
         }
     }
 
-    async Task<List<string>> GetFilesToRemove(Guid srcPackageGuid, Guid dstPackageGuid, CancellationToken ct)
+    async Task<List<string>> GetFilesToRemove(Guid product, Guid srcPackage, Guid dstPackage, CancellationToken ct)
     {
-        var srcTask = GetClient().Ndib_GetVerificationHashAsync(srcPackageGuid, PlatformResolver.GetPlatform(), ct);
-        var dstTask = GetClient().Ndib_GetVerificationHashAsync(dstPackageGuid, PlatformResolver.GetPlatform(), ct);
+        var srcTask = GetNdibClient().Download_GetVerificationHashAsync(product, srcPackage, PlatformResolver.GetPlatform(), ct);
+        var dstTask = GetNdibClient().Download_GetVerificationHashAsync(product, dstPackage, PlatformResolver.GetPlatform(), ct);
         await Task.WhenAll(srcTask, dstTask);
 
         var src = srcTask.Result;
@@ -213,7 +215,7 @@ class InstallationService(
     async Task<bool> VerifyInstallation(Installed installed, CancellationToken ct)
     {
         var productPath = GetProductPath(installed.ProductGuid, installed.Library!.Path);
-        var remoteHash = await GetClient().Ndib_GetVerificationHashAsync(installed.PackageGuid, PlatformResolver.GetPlatform(), ct);
+        var remoteHash = await GetNdibClient().Download_GetVerificationHashAsync(installed.ProductGuid, installed.PackageGuid, PlatformResolver.GetPlatform(), ct);
         var localHash = ProductHashHandler.GetFileHashes(productPath, remoteHash.Keys.ToList());
 
         return remoteHash.Keys.Count == localHash.Keys.Count && remoteHash.Keys.All(k => localHash.ContainsKey(k) && localHash[k] == remoteHash[k]);
@@ -237,7 +239,9 @@ class InstallationService(
         }
     }
 
-    DsLauncherClient GetClient() => clientFactory.CreateClient(cache.GetToken() ?? throw new());
+    DsLauncherClient GetLauncherClient() => launcherClientFactory.CreateClient(cache.GetToken() ?? throw new());
+
+    DsNdibClient GetNdibClient() => ndibClientFactory.CreateClient(cache.GetToken() ?? throw new());
 
     void SetUpdateState(Guid productGuid, UpdateStep step, float percentage = 100)
     {
@@ -252,7 +256,7 @@ class InstallationService(
 
     async Task<string> GetExePath(Guid packageGuid, CancellationToken ct)
     {
-        var package = await GetClient().Package_GetAsync(packageGuid, ct);
+        var package = await GetLauncherClient().Package_GetAsync(packageGuid, ct);
         return PlatformResolver.GetPlatform() switch
         {
             Platform.Win => package.WindowsExePath ?? string.Empty,

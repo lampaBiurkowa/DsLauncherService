@@ -14,8 +14,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DsCore.ApiClient" Version="1.0.32" />
-    <PackageReference Include="DsLauncher.ApiClient" Version="1.0.101" />
+    <PackageReference Include="DsCore.ApiClient" Version="1.0.66" />
+    <PackageReference Include="DsLauncher.ApiClient" Version="1.0.132" />
+    <PackageReference Include="DsNdib.ApiClient" Version="1.0.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="WatsonWebsocket" Version="4.1.2" />

@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices;
-using DsLauncher.ApiClient;
+using DsNdib.ApiClient;
 
 namespace DsLauncherService.Helpers;
 

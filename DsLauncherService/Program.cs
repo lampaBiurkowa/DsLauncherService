@@ -20,8 +20,8 @@ internal class Program
         .UseContentRoot(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!)
         .ConfigureServices((ctx, services) =>
         {
-            ctx.Configuration.AddDsCore(services);
-            ctx.Configuration.AddDsLauncher(services);
+            services.AddDsCore(ctx.Configuration);
+            services.AddDsLauncher(ctx.Configuration);
             services.AddSingleton<ServerProvider>();
             services.AddSingleton<CommandDispatcher>();
             services.AddDbContext<DbContext, DsLauncherServiceContext>();
