@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using DsLauncherService.Storage;
 using DibBase.Infrastructure;
 using DsLauncher.ApiClient;
+using DsNdib.ApiClient;
+using Microsoft.Extensions.Configuration;
 
 namespace DsLauncherService;
 
@@ -18,10 +20,17 @@ internal class Program
     {
         await Host.CreateDefaultBuilder(args)
         .UseContentRoot(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!)
+        .ConfigureAppConfiguration((context, config) =>
+                {
+                    config.SetBasePath(Directory.GetCurrentDirectory())
+                          .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
+                          .AddEnvironmentVariables();
+                })
         .ConfigureServices((ctx, services) =>
         {
             services.AddDsCore(ctx.Configuration);
             services.AddDsLauncher(ctx.Configuration);
+            services.AddDsNdib(ctx.Configuration);
             services.AddSingleton<ServerProvider>();
             services.AddSingleton<CommandDispatcher>();
             services.AddDbContext<DbContext, DsLauncherServiceContext>();
