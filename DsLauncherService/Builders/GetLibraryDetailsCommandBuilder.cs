@@ -15,7 +15,13 @@ class GetLibraryDetailsCommandBuilder(
     {
         var library = (await libraryRepo.GetAll(restrict: x => x.Path == path, ct: ct)).FirstOrDefault() ?? throw new();
         var installed = (await installedRepo.GetAll(restrict: x => x.LibraryId == library.Id, ct: ct)).Select(x => x.ProductGuid);
-        return new Response(Name, new GetLibraryDetailsCommandArgs() { Installed = installed, SizeBytes = GetDirectorySize(library.Path) });
+        return new Response(Name, new GetLibraryDetailsCommandArgs {
+            Installed = installed,
+            SizeBytes = GetDirectorySize(library.Path),
+            Name = library.Name,
+            Path = library.Path,
+            IsDeveloper = library.IsDeveloper
+        });
     }
 
     static long GetDirectorySize(string directoryPath)

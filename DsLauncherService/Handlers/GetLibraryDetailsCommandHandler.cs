@@ -4,7 +4,7 @@ using DsLauncherService.Communication;
 namespace DsLauncherService.Handlers;
 
 [Command("get-library-details")]
-internal class GetLibryDetailsCommandHandler(GetLibraryDetailsCommandBuilder builder) : ICommandHandler
+internal class GetLibraryDetailsCommandHandler(GetLibraryDetailsCommandBuilder builder) : ICommandHandler
 {
     public async Task<Response> Handle(CommandArgs args, CancellationToken ct)
     {

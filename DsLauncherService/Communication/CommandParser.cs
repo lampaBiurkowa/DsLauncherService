@@ -37,8 +37,8 @@ internal static class CommandParser
             int colonIndex = line.IndexOf(':');
             if (colonIndex == -1) break;
 
-            string argName = line[..colonIndex];
-            string argValue = line[(colonIndex + 1)..];
+            var argName = line[..colonIndex];
+            var argValue = line[(colonIndex + 1)..];
 
             args.Add(argName, argValue);
         }

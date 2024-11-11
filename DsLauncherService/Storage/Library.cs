@@ -8,6 +8,7 @@ public class Library : Entity
 {
     public required string Path { get; set; }
     public required string Name { get; set; }
+    public bool IsDeveloper { get; set; }
 }
 
 public class LibraryConfiguration : IEntityTypeConfiguration<Library>

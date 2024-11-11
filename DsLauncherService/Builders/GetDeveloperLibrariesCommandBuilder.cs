@@ -5,13 +5,13 @@ using DsLauncherService.Storage;
 
 namespace DsLauncherService.Builders;
 
-class GetLibrariesCommandBuilder(Repository<Library> repo) : ICommandBuilder
+class GetDeveloperLibrariesCommandBuilder(Repository<Library> repo) : ICommandBuilder
 {
-    public string Name => "get-libraries";
+    public string Name => "get-developer-libraries";
 
     public async Task<Response> Build(CancellationToken ct)
     {
-        var libraries = await repo.GetAll(restrict: x => !x.IsDeveloper, ct: ct);
+        var libraries = await repo.GetAll(restrict: x => x.IsDeveloper, ct: ct);
         var result = libraries.Select(x => new LibraryEntry() { Path = x.Path, Name = x.Name }) ?? [];
         return new Response(Name, new GetLibrariesCommandArgs() { Libraries = result });
     }
