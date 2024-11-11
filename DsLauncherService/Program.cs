@@ -22,7 +22,7 @@ internal class Program
         .UseContentRoot(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!)
         .ConfigureAppConfiguration((context, config) =>
                 {
-                    config.SetBasePath(Directory.GetCurrentDirectory())
+                    config.SetBasePath(Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location)!)
                           .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true)
                           .AddEnvironmentVariables();
                 })
