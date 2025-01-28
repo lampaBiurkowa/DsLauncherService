@@ -93,9 +93,9 @@ class InstallationService(
         return await ExecuteInstallTask(async (client, repo, stream) =>
         {
             if (packageGuid == default)
-                packageGuid = await client.DownloadWhole(cache.GetToken() ?? throw new(), productGuid, PlatformResolver.GetPlatform(), stream, (o, progress) => SetUpdateState(productGuid, UpdateStep.Download, progress));
+                packageGuid = await client.DownloadWhole(cache.GetAccessToken() ?? throw new(), productGuid, PlatformResolver.GetPlatform(), stream, (o, progress) => SetUpdateState(productGuid, UpdateStep.Download, progress));
             else
-                await client.DownloadWholeVersion(cache.GetToken() ?? throw new(), productGuid, PlatformResolver.GetPlatform(), packageGuid, stream, (o, progress) => SetUpdateState(productGuid, UpdateStep.Download, progress));
+                await client.DownloadWholeVersion(cache.GetAccessToken() ?? throw new(), productGuid, PlatformResolver.GetPlatform(), packageGuid, stream, (o, progress) => SetUpdateState(productGuid, UpdateStep.Download, progress));
 
             if (packageGuid == default) throw new();
 
@@ -121,7 +121,7 @@ class InstallationService(
         return await ExecuteInstallTask(async (client, repo, stream) =>
         {
             var sourceGuid = installed.PackageGuid;
-            await client.ChangeToVersion(cache.GetToken() ?? throw new(), sourceGuid, dstPackageGuid, PlatformResolver.GetPlatform(), stream, (o, progress) => SetUpdateState(installed.ProductGuid, UpdateStep.Download, progress));
+            await client.ChangeToVersion(cache.GetAccessToken() ?? throw new(), sourceGuid, dstPackageGuid, PlatformResolver.GetPlatform(), stream, (o, progress) => SetUpdateState(installed.ProductGuid, UpdateStep.Download, progress));
 
             installed.PackageGuid = dstPackageGuid;
             installed.ExePath = await GetExePath(installed.PackageGuid, ct);
@@ -140,7 +140,7 @@ class InstallationService(
         return await ExecuteInstallTask(async (client, repo, stream) =>
         {
             var sourceGuid = installed.PackageGuid;
-            var latestPackageGuid = await client.UpdateToLatest(cache.GetToken() ?? throw new(), sourceGuid, PlatformResolver.GetPlatform(), stream, (o, progress) => SetUpdateState(installed.ProductGuid, UpdateStep.Download, progress));
+            var latestPackageGuid = await client.UpdateToLatest(cache.GetAccessToken() ?? throw new(), sourceGuid, PlatformResolver.GetPlatform(), stream, (o, progress) => SetUpdateState(installed.ProductGuid, UpdateStep.Download, progress));
             if (latestPackageGuid == default) throw new();
             
             installed.PackageGuid = latestPackageGuid;
@@ -160,7 +160,7 @@ class InstallationService(
         return await ExecuteInstallTask(async (client, repo, stream) =>
         {
             await client.DownloadWholeVersion(
-                cache.GetToken() ?? throw new(),
+                cache.GetAccessToken() ?? throw new(),
                 installed.ProductGuid,
                 PlatformResolver.GetPlatform(),
                 installed.PackageGuid,
@@ -239,9 +239,9 @@ class InstallationService(
         }
     }
 
-    DsLauncherClient GetLauncherClient() => launcherClientFactory.CreateClient(cache.GetToken() ?? throw new());
+    DsLauncherClient GetLauncherClient() => launcherClientFactory.CreateClient(cache.GetAccessToken() ?? throw new());
 
-    DsNdibClient GetNdibClient() => ndibClientFactory.CreateClient(cache.GetToken() ?? throw new());
+    DsNdibClient GetNdibClient() => ndibClientFactory.CreateClient(cache.GetAccessToken() ?? throw new());
 
     void SetUpdateState(Guid productGuid, UpdateStep step, float percentage = 100)
     {

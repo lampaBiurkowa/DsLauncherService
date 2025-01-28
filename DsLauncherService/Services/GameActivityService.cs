@@ -130,5 +130,5 @@ public class GameActivityService(
         }
     }
 
-    DsLauncherClient GetClient() => clientFactory.CreateClient(cache.GetToken() ?? throw new());
+    DsLauncherClient GetClient() => clientFactory.CreateClient(cache.GetAccessToken() ?? throw new());
 }

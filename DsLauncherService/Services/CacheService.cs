@@ -3,15 +3,16 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace DsLauncherService.Services;
 
-public class CacheService(IMemoryCache cache, DsCoreClientFactory clientFactory)
+public class CacheService(IMemoryCache cache)
 {
-    const string TOKEN_KEY = "token";
-    const string USER_KEY = "user";
+    const string ACCESS_TOKEN_KEY = "ACCESS_TOKEN";
+    const string REFRESH_TOKEN_KEY = "REFRESH_TOKEN";
+    const string USER_KEY = "USER";
     readonly IMemoryCache cache = cache;
-    readonly DsCoreClientFactory clientFactory = clientFactory;
 
-    public void SetToken(string token) => cache.Set(TOKEN_KEY, token);
-    public string? GetToken() => Get<string>(TOKEN_KEY);
+    public void SetRefreshToken(string token) => cache.Set(REFRESH_TOKEN_KEY, token);
+    public void SetAccessToken(string token) => cache.Set(ACCESS_TOKEN_KEY, token);
+    public string? GetAccessToken() => Get<string>(ACCESS_TOKEN_KEY);
     public void SetUser(Guid userGuid) => cache.Set(USER_KEY, userGuid);
     public Guid? GetUser() => Get<Guid>(USER_KEY);
 

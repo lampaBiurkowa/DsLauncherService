@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DsCore.ApiClient" Version="1.0.66" />
+    <PackageReference Include="DsCore.ApiClient" Version="1.0.120" />
     <PackageReference Include="DsLauncher.ApiClient" Version="1.0.132" />
     <PackageReference Include="DsNdib.ApiClient" Version="1.0.15" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.6" />
